@@ -47,6 +47,7 @@ window.SITE_DATA = {
     patronymic: "Игоревна",
     position: "Менеджер по продажам",
     department: "Отдел продаж",
+    direction: "Продажи",
     tenure: "2 месяца",
     phone: "+7 916 118 2244",
     email: "y.mezentseva@kontur.ru",
@@ -427,6 +428,10 @@ window.SITE_DATA = {
       requirements: ["Грамотная устная и письменная речь", "Готовность работать по графику 5/2", "Опыт в поддержке — плюс, но не обязателен"],
       conditions: ["Оформление по ТК РФ", "ДМС после испытательного срока", "Обучение и наставник на старте"],
       recruiter: { name: "Мария Волкова", role: "Рекрутер, Контактный центр", email: "m.volkova@kontur.ru", phone: "+7 916 500 1122" },
+      matchingEmployees: [
+        { name: "Артём Ковалёв", position: "Специалист контакт-центра", department: "Контактный центр", matchPercent: 91, email: "a.kovalev@kontur.ru" },
+        { name: "Дарья Фомина", position: "Оператор поддержки", department: "Контактный центр", matchPercent: 84, email: "d.fomina@kontur.ru" },
+      ],
     },
     {
       id: "v2", source: "ats", title: "Руководитель отдела продаж", direction: "Продажи", department: "Отдел продаж",
@@ -437,6 +442,10 @@ window.SITE_DATA = {
       requirements: ["Опыт руководства отделом продаж от 2 лет", "Опыт работы с CRM и воронкой", "Навыки постановки целей и контроля метрик"],
       conditions: ["Годовой бонус по результатам", "Оформление по ТК РФ", "Служебный телефон"],
       recruiter: { name: "Игорь Панов", role: "Рекрутер, Отдел продаж", email: "i.panov@kontur.ru", phone: "+7 916 500 2233" },
+      matchingEmployees: [
+        { name: "Юлия Мезенцева", position: "Менеджер по продажам", department: "Отдел продаж", matchPercent: 88, email: "y.mezentseva@kontur.ru" },
+        { name: "Роман Дьяконов", position: "Ведущий менеджер по продажам", department: "Отдел продаж", matchPercent: 79, email: "r.dyakonov@kontur.ru" },
+      ],
     },
     {
       id: "v3", source: "ats", title: "Продуктовый аналитик", direction: "Аналитика", department: "Трайб «Данные и аналитика»", isNew: true,

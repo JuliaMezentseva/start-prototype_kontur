@@ -17,7 +17,7 @@
 <script type="text/babel">
 const { Card, Tag, Input, Select, Button, Checkbox, Tabs, Divider, Switch, Snackbar } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
-const { IconSearch, IconX, IconSparklesSolid } = Icons;
+const { IconSearch, IconMapPin, IconBriefcase, IconX, IconChevronDown, IconSparklesSolid } = Icons;
 const D = window.SITE_DATA;
 
 // Переключатель "Витрина / Мои отклики" — это переход между двумя разными HTML-страницами
@@ -131,29 +131,60 @@ function FilterSelect({ label, options, value, onChange }) {
 }
 
 // Фильтр с потенциально длинным списком вариантов (Направление, Должность, Подразделение) —
-// поиск и список чекбоксов видны сразу, без раскрытия по клику: набор значений может быть
-// большим, поэтому сразу нужен способ его сузить.
+// свёрнут по умолчанию, как и компактные Select-фильтры рядом (иначе поиск+список
+// перевешивают панель по высоте и выбиваются из общего вида). Первый пункт списка —
+// всегда "Моё …" (моя должность/подразделение/направление), выделен и не исчезает при
+// поиске, чтобы им можно было воспользоваться в одно движение, не печатая ничего.
 function FilterSearchList({ label, options, value, onChange }) {
+  const [open, setOpen] = React.useState(false);
   const [q, setQ] = React.useState("");
   const needle = q.trim().toLowerCase();
-  const shown = needle ? options.filter((o) => o.label.toLowerCase().includes(needle)) : options;
+  const [pinned, ...rest] = options;
+  const pinnedShown = !needle || pinned.label.toLowerCase().includes(needle) || pinned.value.toLowerCase().includes(needle);
+  const restShown = needle ? rest.filter((o) => o.label.toLowerCase().includes(needle)) : rest;
   function toggle(v) { onChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v]); }
   return (
     <div className="sk-col sk-gap-2">
-      <span style={{ font: value.length ? "var(--sk-label-3)" : "var(--sk-label-3-regular)", color: "var(--sk-text-primary)" }}>
-        {label}{value.length ? " · " + value.length : ""}
-      </span>
-      <Input size="s" icon={<IconSearch size={16} />} placeholder="Поиск" value={q} onChange={(e) => setQ(e.target.value || "")} />
-      <div className="sk-col" style={{ maxHeight: 160, overflowY: "auto" }}>
-        {shown.length ? shown.map((o) => (
-          <label key={o.value} className="sk-row sk-gap-2" style={{ padding: "5px 2px", cursor: "pointer", alignItems: "center" }}>
-            <Checkbox checked={value.includes(o.value)} onChange={() => toggle(o.value)} />
-            <span className="sk-label-4-regular">{o.label}</span>
-          </label>
-        )) : (
-          <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", padding: "5px 2px" }}>Ничего не найдено</div>
-        )}
-      </div>
+      <button type="button" onClick={() => setOpen((o) => !o)} className="sk-clickable" style={{
+        display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%",
+        background: "none", border: "none", padding: 0, cursor: "pointer",
+      }}>
+        <span style={{ font: value.length ? "var(--sk-label-3)" : "var(--sk-label-3-regular)", color: "var(--sk-text-primary)" }}>
+          {label}{value.length ? " · " + value.length : ""}
+        </span>
+        <IconChevronDown size={14} style={{ opacity: 0.55, transform: open ? "rotate(180deg)" : "none", transition: "transform var(--sk-duration) var(--sk-ease)" }} />
+      </button>
+      {open && (
+        <div className="sk-col sk-gap-1">
+          <div style={{ position: "relative" }}>
+            <IconSearch size={13} style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", opacity: 0.45, pointerEvents: "none" }} />
+            <input type="text" value={q} onChange={(e) => setQ(e.target.value || "")} placeholder="Поиск" style={{
+              width: "100%", height: 28, padding: "0 8px 0 26px", boxSizing: "border-box", borderRadius: "var(--sk-radius-2)",
+              border: "1px solid var(--sk-stroke)", background: "var(--sk-surface-page)",
+              font: "var(--sk-label-4-regular)", color: "var(--sk-text-primary)", outline: "none",
+            }} />
+          </div>
+          <div className="sk-col" style={{ maxHeight: 160, overflowY: "auto" }}>
+            {pinnedShown && (
+              <label className="sk-row sk-gap-2" style={{
+                padding: "5px 2px", marginBottom: 2, cursor: "pointer", alignItems: "center",
+                borderBottom: "1px solid var(--sk-stroke)",
+              }}>
+                <Checkbox checked={value.includes(pinned.value)} onChange={() => toggle(pinned.value)} />
+                <span className="sk-label-4">{pinned.label}</span>
+              </label>
+            )}
+            {restShown.length ? restShown.map((o) => (
+              <label key={o.value} className="sk-row sk-gap-2" style={{ padding: "5px 2px", cursor: "pointer", alignItems: "center" }}>
+                <Checkbox checked={value.includes(o.value)} onChange={() => toggle(o.value)} />
+                <span className="sk-label-4-regular">{o.label}</span>
+              </label>
+            )) : (!pinnedShown && (
+              <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", padding: "5px 2px" }}>Ничего не найдено</div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -227,8 +258,9 @@ function VacancyCard({ vacancy, hasResponse, matchPercent }) {
             <Tag size="s" hue="gray" pill>{vacancy.transitionType}</Tag>
           </div>
 
-          <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", opacity: dim }}>
-            {vacancy.city} · {vacancy.department}
+          <div className="sk-row sk-gap-2 sk-muted" style={{ font: "var(--sk-label-4-regular)", opacity: dim, flexWrap: "wrap" }}>
+            <span className="sk-row sk-gap-1"><IconMapPin size={13} />{vacancy.city}</span>
+            <span className="sk-row sk-gap-1"><IconBriefcase size={13} />{vacancy.department}</span>
           </div>
         </div>
       </Card>
@@ -270,6 +302,10 @@ function Page() {
     const rest = [...new Set(visibleVacancies.map((v) => v.title))].filter((t) => t !== D.person.position).sort();
     return [{ value: D.person.position, label: "Моя должность" }, ...toOptions(rest)];
   }, [visibleVacancies]);
+  const directionOptions = React.useMemo(() => {
+    const rest = D.directions.filter((d) => d !== D.person.direction);
+    return [{ value: D.person.direction, label: "Моё направление" }, ...toOptions(rest)];
+  }, []);
 
   const needle = q.trim().toLowerCase();
   const filtered = visibleVacancies.filter((v) => {
@@ -324,7 +360,7 @@ function Page() {
           </div>
 
           <FiltersPanel filters={filters} onChange={setFilters} hasActiveFilters={hasActiveFilters} onReset={() => setFilters(emptyFilters)}
-            directionOptions={toOptions(D.directions)} positionOptions={positionOptions} departmentOptions={departmentOptions}
+            directionOptions={directionOptions} positionOptions={positionOptions} departmentOptions={departmentOptions}
             subscriptions={subscriptions} onSubscribe={subscribe} onUnsubscribe={unsubscribe} />
         </div>
       </div>

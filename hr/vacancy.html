@@ -15,9 +15,9 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Card, Tag, TextList, Divider, Avatar } = window.SkillazCoreDesignSystem_bf9566;
+const { Card, Tag, TextList, Divider, Avatar, Button } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons, directionHue } = window.Site;
-const { IconArrowLeft, IconMapPin, IconMail, IconPhone, IconTarget, IconCheck, IconGift, IconLayers, IconClock, IconBriefcase } = Icons;
+const { IconArrowLeft, IconMapPin, IconMail, IconPhone, IconTarget, IconCheck, IconGift, IconLayers, IconClock, IconBriefcase, IconSparklesSolid } = Icons;
 const D = window.SITE_DATA;
 
 function fmtMoney(n) { return n.toLocaleString("ru-RU"); }
@@ -87,6 +87,37 @@ function Page() {
               </div>
             </div>
           </Card>
+
+          {vacancy.matchingEmployees && vacancy.matchingEmployees.length > 0 && (
+            <Card bordered>
+              <div className="sk-col sk-gap-3">
+                <div className="sk-row sk-gap-2 sk-label-2"><IconSparklesSolid size={18} color="rgb(117,59,233)" />Подходящие сотрудники</div>
+                <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>
+                  Внутренние сотрудники, чей профиль и цели развития перекликаются с этой вакансией.
+                </div>
+                <div className="sk-col">
+                  {vacancy.matchingEmployees.map((e, i) => (
+                    <div key={i} className="sk-row sk-gap-3" style={{
+                      alignItems: "center", padding: "12px 0",
+                      borderTop: i > 0 ? "1px solid var(--sk-stroke)" : "none",
+                    }}>
+                      <Avatar name={e.name} size={36} />
+                      <div className="sk-col" style={{ flex: 1, gap: 0, minWidth: 0 }}>
+                        <div className="sk-label-3">{e.name}</div>
+                        <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{e.position} · {e.department}</div>
+                      </div>
+                      <Tag size="s" pill icon={<IconSparklesSolid size={12} />} style={{ background: "var(--sk-special-secondary)", color: "rgb(117,59,233)", flexShrink: 0 }}>
+                        {e.matchPercent}%
+                      </Tag>
+                      <a href={"mailto:" + e.email} style={{ textDecoration: "none", flexShrink: 0 }}>
+                        <Button mode="tertiary" size="s">Написать</Button>
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Card>
+          )}
         </div>
 
         <div style={{ width: 300, flexShrink: 0 }}>
