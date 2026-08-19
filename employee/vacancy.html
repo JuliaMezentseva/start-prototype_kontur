@@ -131,7 +131,7 @@ function Page() {
           </div>
         </div>
         <div className="sk-row sk-gap-2">
-          {!closed && <Button mode="secondary" icon={<IconUserPlus size={16} />} onClick={() => setRecommendOpen(true)}>Рекомендовать</Button>}
+          {!closed && <Button variant="accent" mode="secondary" icon={<IconUserPlus size={16} />} onClick={() => setRecommendOpen(true)}>Рекомендовать</Button>}
           <ApplyCta />
         </div>
       </div>
@@ -342,7 +342,7 @@ function RecommendModal({ vacancy, onClose, onSubmitted }) {
 
         <Input label="Город, в котором проживает кандидат" required value={city} onChange={(e) => setCity(e.target.value || "")} />
         <Input label="Мобильный телефон кандидата" required placeholder="+7 900 000 00 00" value={phone} onChange={(e) => setPhone(e.target.value || "")} />
-        <Select label="Статус знакомства" required options={RELATION_OPTIONS} value={relation} onChange={setRelation} placeholder="Выберите вариант" />
+        <Select label="Кем вам приходится кандидат?" required options={RELATION_OPTIONS} value={relation} onChange={setRelation} placeholder="Выберите вариант" />
         <Textarea label="Причина рекомендации" required placeholder="Почему вы считаете кандидата подходящим?"
           value={reason} onChange={(e) => setReason((e.target.value || "").slice(0, 500))} rows={3} />
 

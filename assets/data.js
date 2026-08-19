@@ -419,7 +419,7 @@ window.SITE_DATA = {
 
   vacancies: [
     {
-      id: "v1", source: "ats", title: "Специалист поддержки клиентов", direction: "Поддержка клиентов", department: "Контактный центр",
+      id: "v1", source: "ats", title: "Специалист поддержки клиентов", direction: "Поддержка клиентов", department: "Контактный центр", isNew: true,
       city: "Санкт-Петербург", format: "Офис", grade: "Junior", employment: "Полная занятость", schedule: "5/2, 09:00–18:00",
       salaryFrom: 70000, salaryTo: 90000, experience: "Без опыта", status: "open", postedDate: "5 дней назад", transitionType: "Постоянный перевод",
       requiredSkills: ["Клиентский сервис", "Грамотная речь", "CRM", "Работа с возражениями"],
@@ -439,7 +439,7 @@ window.SITE_DATA = {
       recruiter: { name: "Игорь Панов", role: "Рекрутер, Отдел продаж", email: "i.panov@kontur.ru", phone: "+7 916 500 2233" },
     },
     {
-      id: "v3", source: "ats", title: "Продуктовый аналитик", direction: "Аналитика", department: "Трайб «Данные и аналитика»",
+      id: "v3", source: "ats", title: "Продуктовый аналитик", direction: "Аналитика", department: "Трайб «Данные и аналитика»", isNew: true,
       city: "Москва", format: "Удалённо", grade: "Middle", employment: "Полная занятость", schedule: "Гибкий",
       salaryFrom: 160000, salaryTo: 200000, experience: "От 2 лет", status: "open", postedDate: "Сегодня", transitionType: "Временная ротация",
       requiredSkills: ["SQL", "BI-инструменты", "A/B-тесты", "Продуктовые метрики", "Python"],
