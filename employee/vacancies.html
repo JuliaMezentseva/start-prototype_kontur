@@ -85,17 +85,14 @@ function SubscribeBar({ filters, hasActiveFilters, subscriptions, onSubscribe, o
   const sig = filtersSignature(filters);
   const isOn = hasActiveFilters && subscriptions.some((s) => s.sig === sig);
   return (
-    <div className="sk-col sk-gap-2">
-      <div className="sk-row sk-gap-3" style={{
-        alignItems: "center", padding: "10px 14px", borderRadius: "var(--sk-radius-2)",
+    <div className="sk-col sk-gap-2" style={{ width: "fit-content", maxWidth: "100%" }}>
+      <div className="sk-row sk-gap-2" style={{
+        alignItems: "center", padding: "8px 12px", borderRadius: "var(--sk-radius-2)",
         border: "1px solid var(--sk-stroke)", background: "var(--sk-surface-secondary)",
       }}>
-        <IconBell size={18} color="var(--sk-icon-secondary)" />
-        <div className="sk-col" style={{ flex: 1, gap: 2 }}>
-          <div className="sk-label-3-regular">Уведомлять о новых вакансиях по этим фильтрам</div>
-          {!hasActiveFilters && (
-            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Выберите хотя бы один фильтр, чтобы подписаться</div>
-          )}
+        <IconBell size={16} color="var(--sk-icon-secondary)" />
+        <div className="sk-label-4-regular" style={{ whiteSpace: "nowrap" }}>
+          {hasActiveFilters ? "Уведомлять о новых по этим фильтрам" : "Выберите фильтр, чтобы подписаться"}
         </div>
         <Switch checked={isOn} disabled={!hasActiveFilters} onChange={(v) => (v ? onSubscribe(sig, filters) : onUnsubscribe(sig))} />
       </div>
@@ -131,7 +128,7 @@ function FiltersSummaryChip({ count, open, onToggle, onReset }) {
   return (
     <button type="button" onClick={onToggle} className="sk-clickable" style={{
       display: "inline-flex", alignItems: "center", gap: 6, height: 40, padding: "0 14px",
-      borderRadius: "var(--sk-radius-full)", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
+      borderRadius: "var(--sk-radius-form)", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
       border: `1.5px solid ${active ? "var(--sk-stroke-accent)" : "var(--sk-stroke)"}`,
       background: "var(--sk-surface-page)", font: "var(--sk-label-3-regular)",
       color: active ? "var(--sk-text-accent)" : "var(--sk-text-primary)",
@@ -176,7 +173,7 @@ function FilterChip({ label, options, value, onChange, searchable }) {
     <div ref={ref} style={{ position: "relative" }}>
       <button type="button" onClick={() => setOpen((o) => !o)} className="sk-clickable" style={{
         display: "inline-flex", alignItems: "center", gap: 6, height: 40, padding: "0 14px",
-        borderRadius: "var(--sk-radius-full)", cursor: "pointer", whiteSpace: "nowrap",
+        borderRadius: "var(--sk-radius-form)", cursor: "pointer", whiteSpace: "nowrap",
         border: `1.5px solid ${value.length ? "var(--sk-stroke-accent)" : "var(--sk-stroke)"}`,
         background: "var(--sk-surface-page)", font: "var(--sk-label-3-regular)",
         color: value.length ? "var(--sk-text-accent)" : "var(--sk-text-primary)",
