@@ -293,6 +293,12 @@ function Page() {
     { key: "title", title: <SortableHeader label="Вакансия" sortKey="title" />, width: "24%", render: (v) => (
       <span className="sk-label-3">{v.title}</span>
     ) },
+    { key: "visible", title: "Публикация сотрудникам", render: (v) => (
+      <div className="sk-row sk-gap-2" onClick={(e) => e.stopPropagation()}>
+        <Switch checked={!!v.visibleToEmployees} onChange={() => togglePublish(v)} />
+        <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{v.visibleToEmployees ? "Видна" : "Скрыта"}</span>
+      </div>
+    ) },
     ...OPTIONAL_COLUMNS.filter((c) => visibleOptionalCols.includes(c.key)).map((c) => optionalColumnDefs[c.key]),
     { key: "direction", title: "Направление", render: (v) => <Tag size="s" hue="neutral">{v.direction}</Tag> },
     { key: "status", title: "Статус", render: (v) => <Tag size="s" hue={v.status === "open" ? "positive" : "neutral"}>{v.status === "open" ? "Идёт поиск" : "Закрыта"}</Tag> },
@@ -306,12 +312,6 @@ function Page() {
         <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>0</span>
       )
     ) },
-    { key: "visible", title: "Публикация сотрудникам", render: (v) => (
-      <div className="sk-row sk-gap-2" onClick={(e) => e.stopPropagation()}>
-        <Switch checked={!!v.visibleToEmployees} onChange={() => togglePublish(v)} />
-        <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{v.visibleToEmployees ? "Видна" : "Скрыта"}</span>
-      </div>
-    ) },
     { key: "actions", title: "", width: 56, render: (v) => (
       v.source === "manual" && (
         <Tooltip content="Редактировать">
@@ -322,8 +322,10 @@ function Page() {
   ];
 
   function exportResponsesCsv() {
-    const header = ["Вакансия", "Направление", "Подразделение", "Статус", "Отклики"];
-    const rows = vacancies.map((v) => [v.title, v.direction, v.department, v.status === "open" ? "Идёт поиск" : "Закрыта", v.responsesCount]);
+    const header = ["Вакансия", "Фамилия", "Имя", "Отчество", "Текущая должность", "Подразделение", "Стаж", "Город", "Телефон", "Почта", "Мотивационное письмо", "Дата отклика"];
+    const rows = vacancies.flatMap((v) => (v.responses || []).map((r) => [
+      v.title, r.lastName, r.firstName, r.patronymic, r.position, r.department, r.tenure, r.city, r.phone, r.email, r.letter, r.date,
+    ]));
     const csv = "\uFEFF" + [header, ...rows].map((r) => r.map((c) => '"' + String(c).replace(/"/g, '""') + '"').join(";")).join("\r\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -331,7 +333,7 @@ function Page() {
     a.href = url; a.download = "otkliki-vakansii.csv";
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    showToast("Файл со сводкой откликов скачан");
+    showToast("Файл с откликами скачан");
   }
 
   return (
