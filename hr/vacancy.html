@@ -29,7 +29,7 @@ function vacancyIdFromUrl() {
 function MatchTag({ percent }) {
   return (
     <Tag size="s" pill icon={<IconSparklesSolid size={12} />} style={{ background: "var(--sk-special-secondary)", color: "rgb(117,59,233)", flexShrink: 0 }}>
-      {percent}%
+      Подходит на {percent}%
     </Tag>
   );
 }
@@ -69,9 +69,6 @@ function MatchingEmployeesCard({ employees }) {
                     {expanded === i ? "Скрыть" : "Почему подходит"}
                   </Button>
                 )}
-                <a href={"mailto:" + e.email} style={{ textDecoration: "none", flexShrink: 0 }}>
-                  <Button mode="tertiary" size="s">Написать</Button>
-                </a>
               </div>
               {expanded === i && (
                 <div style={{ padding: "0 0 14px 48px" }}>

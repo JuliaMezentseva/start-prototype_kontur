@@ -17,7 +17,7 @@
 <script type="text/babel">
 const { Card, Tag, Input, Button, Checkbox, Tabs, Switch, Snackbar } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
-const { IconSearch, IconMapPin, IconBriefcase, IconX, IconChevronDown, IconFilter, IconSparklesSolid } = Icons;
+const { IconSearch, IconMapPin, IconBriefcase, IconX, IconFilter, IconSparklesSolid } = Icons;
 const D = window.SITE_DATA;
 
 // Переключатель "Витрина / Мои отклики" — это переход между двумя разными HTML-страницами
@@ -92,7 +92,7 @@ function SubscribeBar({ filters, hasActiveFilters, subscriptions, onSubscribe, o
       }}>
         <IconBell size={16} color="var(--sk-icon-secondary)" />
         <div className="sk-label-4-regular" style={{ whiteSpace: "nowrap" }}>
-          {hasActiveFilters ? "Уведомлять о новых по этим фильтрам" : "Выберите фильтр, чтобы подписаться"}
+          {hasActiveFilters ? "Уведомлять о новых по этим фильтрам" : "Выберите фильтр, чтобы подписаться на уведомления"}
         </div>
         <Switch checked={isOn} disabled={!hasActiveFilters} onChange={(v) => (v ? onSubscribe(sig, filters) : onUnsubscribe(sig))} />
       </div>
@@ -181,12 +181,10 @@ function FilterChip({ label, options, value, onChange, searchable }) {
         {label}
         {valueLabel && <span style={{ color: "var(--sk-text-secondary)" }}>: {valueLabel}</span>}
         {value.length > 1 && <span>{value.length}</span>}
-        {value.length > 0 ? (
+        {value.length > 0 && (
           <span onClick={(e) => { e.stopPropagation(); onChange([]); }} style={{ display: "inline-flex", opacity: 0.7 }}>
             <IconX size={13} />
           </span>
-        ) : (
-          <IconChevronDown size={14} style={{ opacity: 0.55 }} />
         )}
       </button>
       {open && (
@@ -358,7 +356,7 @@ function Page() {
 
       <div className="sk-col sk-gap-3">
         <div className="sk-row sk-gap-2" style={{ alignItems: "center", flexWrap: "wrap" }}>
-          <Input size="s" icon={<IconSearch size={20} />} placeholder="По названию, должности или подразделению"
+          <Input size="s" icon={<IconSearch size={20} />} placeholder="Поиск"
             value={q} onChange={(e) => setQ(e.target.value || "")} style={{ width: 400, flexShrink: 0 }} />
           <FiltersSummaryChip count={activeFilterCount} open={filtersOpen} onToggle={() => setFiltersOpen((o) => !o)} onReset={() => setFilters(emptyFilters)} />
           {/* Поиск с AI: открывает общий дровер-помощник (см. AiAssistantWidget в assets/shell.js)
