@@ -248,7 +248,7 @@ function ApplyModal({ vacancy, initialLetter, onClose, onSubmitted }) {
       secondary={<Button mode="secondary" onClick={onClose}>Отмена</Button>}
       primary={<Button variant="accent" disabled={!resume} onClick={onSubmitted}>Отправить отклик</Button>}>
       <div className="sk-col sk-gap-3 sk-modal-scroll">
-        <Alert hue={initialLetter ? "accent" : "neutral"}>
+        <Alert hue="accent">
           {initialLetter
             ? "Данные и мотивационное письмо подготовлены Skillaz AI по вашему профилю — проверьте, поправьте при необходимости, прикрепите резюме и отправьте сами."
             : "Личные данные ниже подставлены из вашего профиля — проверьте и поправьте при необходимости. Резюме нужно прикрепить отдельно."}
