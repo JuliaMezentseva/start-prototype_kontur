@@ -148,7 +148,7 @@ function PlanTab({ record, view }) {
       <Card bordered>
         <div className="sk-col sk-gap-3">
           <div className="sk-title-5">Чек-лист {record.checklistProgress}%</div>
-          <ProgressBar value={record.checklistProgress} hue="accent" />
+          <ProgressBar value={record.checklistProgress} hue="accent" height={6} />
           <div className="sk-muted">Детальный состав чек-листа и целей для этого плана — вне текущей итерации прототипа (нет связанного объекта плана).</div>
         </div>
       </Card>
@@ -264,7 +264,7 @@ function RightPanel({ record }) {
             </div>
             <div className="sk-col sk-gap-2">
               <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Прогресс новичка</div>
-              <div className="sk-row sk-gap-3"><ProgressBar value={record.checklistProgress} style={{ flex: 1 }} hue="accent" /><span className="sk-label-4">{record.checklistProgress}%</span></div>
+              <div className="sk-row sk-gap-3"><ProgressBar value={record.checklistProgress} style={{ flex: 1 }} hue="accent" height={6} /><span className="sk-label-4">{record.checklistProgress}%</span></div>
             </div>
             {template && <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Шаблон: {template.name}</div>}
           </div>
