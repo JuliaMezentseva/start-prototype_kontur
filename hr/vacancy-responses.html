@@ -15,7 +15,7 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Card, Avatar, Divider, Button, Modal, Input, Table, SegmentedControl, Tag } = window.SkillazCoreDesignSystem_bf9566;
+const { Card, Avatar, Divider, Button, Modal, Input, Table, SegmentedControl, Tag, Tooltip } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
 const { IconArrowLeft, IconMapPin, IconBriefcase, IconPhone, IconMail, IconSearch, IconFileText } = Icons;
 const D = window.SITE_DATA;
@@ -194,10 +194,26 @@ function Page() {
         <span className="sk-label-3">{r.lastName} {r.firstName} {r.patronymic}</span>
       </div>
     ) },
-    { key: "position", title: "Текущая должность", render: (r) => <span className="sk-label-3-regular">{r.position}</span> },
-    { key: "department", title: "Подразделение", render: (r) => <span className="sk-label-3-regular">{r.department}</span> },
+    { key: "role", title: "Текущая роль", render: (r) => (
+      <div className="sk-col" style={{ gap: 0 }}>
+        <span className="sk-label-3-regular">{r.position}</span>
+        <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{r.department}</span>
+      </div>
+    ) },
     { key: "tenure", title: "Стаж", render: (r) => <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{r.tenure}</span> },
     { key: "city", title: "Город", render: (r) => <span className="sk-label-3-regular">{r.city}</span> },
+    { key: "letter", title: "Сопроводительное письмо", render: (r) => (
+      r.letter ? (
+        <Tooltip content={<div style={{ maxWidth: 280, whiteSpace: "normal" }}>{r.letter}</div>}>
+          <span className="sk-label-4-regular" style={{
+            display: "block", maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+            color: "var(--sk-text-secondary)",
+          }}>{r.letter}</span>
+        </Tooltip>
+      ) : (
+        <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>—</span>
+      )
+    ) },
     { key: "date", title: "Дата отклика", render: (r) => <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{r.date}</span> },
     { key: "resume", title: "Резюме", width: 110, render: (r) => (
       <Button mode="tertiary" size="s" icon={<IconFileText size={15} />} onClick={(e) => { e.stopPropagation(); downloadResume(r); }}>Скачать</Button>
