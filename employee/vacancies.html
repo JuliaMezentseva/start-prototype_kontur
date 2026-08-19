@@ -78,39 +78,40 @@ function filtersSignature(filters) {
   return JSON.stringify(Object.keys(FILTER_LABELS).map((k) => [...filters[k]].sort()));
 }
 
-// Панель подписки на уведомления по текущим фильтрам: тогл сохраняет снимок filters
-// как отдельную подписку (в духе job alert на hh.ru/LinkedIn) — если подписок несколько,
-// они показаны бирками под тоглом, каждую можно снять по отдельности.
+// Подписка на уведомления по текущим фильтрам: компактная пилюля с тоглом (в духе job
+// alert на hh.ru/LinkedIn), сидит в одном ряду с "Найдено вакансий" справа. Тогл сохраняет
+// снимок filters как отдельную подписку — если подписок несколько, они показаны бирками
+// ниже, каждую можно снять по отдельности.
 function SubscribeBar({ filters, hasActiveFilters, subscriptions, onSubscribe, onUnsubscribe }) {
   const sig = filtersSignature(filters);
   const isOn = hasActiveFilters && subscriptions.some((s) => s.sig === sig);
   return (
-    <div className="sk-col sk-gap-2" style={{ width: "fit-content", maxWidth: "100%" }}>
-      <div className="sk-row sk-gap-2" style={{
-        alignItems: "center", padding: "8px 12px", borderRadius: "var(--sk-radius-2)",
-        border: "1px solid var(--sk-stroke)", background: "var(--sk-surface-secondary)",
-      }}>
-        <IconBell size={16} color="var(--sk-icon-secondary)" />
-        <div className="sk-label-4-regular" style={{ whiteSpace: "nowrap" }}>
-          {hasActiveFilters ? "Уведомлять о новых по этим фильтрам" : "Выберите фильтр, чтобы подписаться на уведомления"}
-        </div>
-        <Switch checked={isOn} disabled={!hasActiveFilters} onChange={(v) => (v ? onSubscribe(sig, filters) : onUnsubscribe(sig))} />
-      </div>
-      {subscriptions.length > 0 && (
-        <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>
-          {subscriptions.map((s) => (
-            <span key={s.sig} className="sk-row sk-gap-1" style={{
-              alignItems: "center", padding: "5px 6px 5px 10px", borderRadius: "var(--sk-radius-full)",
-              border: "1px solid var(--sk-stroke)", font: "var(--sk-label-4-regular)", color: "var(--sk-text-secondary)",
-            }}>
-              <IconBell size={12} />{s.summary || "Все вакансии"}
-              <span onClick={() => onUnsubscribe(s.sig)} className="sk-clickable" style={{ display: "inline-flex", opacity: 0.55, padding: 2 }}>
-                <IconX size={12} />
-              </span>
-            </span>
-          ))}
-        </div>
-      )}
+    <div className="sk-row sk-gap-2" style={{
+      alignItems: "center", flexShrink: 0, padding: "6px 6px 6px 12px", borderRadius: "var(--sk-radius-full)",
+      border: "1px solid var(--sk-stroke)", opacity: hasActiveFilters ? 1 : 0.6,
+    }} title={hasActiveFilters ? undefined : "Выберите фильтр, чтобы подписаться на уведомления"}>
+      <IconBell size={16} color="var(--sk-icon-secondary)" />
+      <div className="sk-label-4-regular" style={{ whiteSpace: "nowrap" }}>Подписаться на уведомления</div>
+      <Switch checked={isOn} disabled={!hasActiveFilters} onChange={(v) => (v ? onSubscribe(sig, filters) : onUnsubscribe(sig))} />
+    </div>
+  );
+}
+
+function SubscriptionsList({ subscriptions, onUnsubscribe }) {
+  if (!subscriptions.length) return null;
+  return (
+    <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>
+      {subscriptions.map((s) => (
+        <span key={s.sig} className="sk-row sk-gap-1" style={{
+          alignItems: "center", padding: "5px 6px 5px 10px", borderRadius: "var(--sk-radius-full)",
+          border: "1px solid var(--sk-stroke)", font: "var(--sk-label-4-regular)", color: "var(--sk-text-secondary)",
+        }}>
+          <IconBell size={12} />{s.summary || "Все вакансии"}
+          <span onClick={() => onUnsubscribe(s.sig)} className="sk-clickable" style={{ display: "inline-flex", opacity: 0.55, padding: 2 }}>
+            <IconX size={12} />
+          </span>
+        </span>
+      ))}
     </div>
   );
 }
@@ -373,10 +374,13 @@ function Page() {
             directionOptions={directionOptions} positionOptions={positionOptions} departmentOptions={departmentOptions} />
         )}
 
-        <SubscribeBar filters={filters} hasActiveFilters={hasActiveFilters} subscriptions={subscriptions}
-          onSubscribe={subscribe} onUnsubscribe={unsubscribe} />
+        <div className="sk-row" style={{ alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+          <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Найдено вакансий: {filtered.length}</div>
+          <SubscribeBar filters={filters} hasActiveFilters={hasActiveFilters} subscriptions={subscriptions}
+            onSubscribe={subscribe} onUnsubscribe={unsubscribe} />
+        </div>
 
-        <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Найдено вакансий: {filtered.length}</div>
+        <SubscriptionsList subscriptions={subscriptions} onUnsubscribe={unsubscribe} />
 
         {filtered.length === 0 ? (
           <Card><div className="sk-muted" style={{ textAlign: "center", padding: "24px 0" }}>Ничего не нашлось по заданным условиям.</div></Card>
