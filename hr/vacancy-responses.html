@@ -15,9 +15,9 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Card, Avatar, Divider, Button, Modal, Input, Table, SegmentedControl, Tag, Tooltip } = window.SkillazCoreDesignSystem_bf9566;
+const { Card, Avatar, Divider, Button, Modal, Input, Table, SegmentedControl, Tag, Select } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
-const { IconArrowLeft, IconMapPin, IconBriefcase, IconPhone, IconMail, IconSearch, IconFileText } = Icons;
+const { IconArrowLeft, IconMapPin, IconBriefcase, IconPhone, IconMail, IconSearch, IconFileText, IconDownload } = Icons;
 const D = window.SITE_DATA;
 
 function vacancyIdFromUrl() {
@@ -48,6 +48,24 @@ function downloadResume(r) {
   URL.revokeObjectURL(url);
 }
 
+// Стаж и дата — свободный текст ("2 года 3 месяца", "14.03.26"), для сортировки и
+// фильтра по стажу разбираем их в сравнимые числа.
+function parseTenureMonths(t) {
+  const nums = ((t || "").match(/\d+/g) || []).map(Number);
+  return (nums[0] || 0) * 12 + (nums[1] || 0);
+}
+function tenureBucket(t) {
+  const m = parseTenureMonths(t);
+  if (m < 12) return "lt1";
+  if (m < 36) return "1to3";
+  return "gt3";
+}
+const TENURE_BUCKET_LABELS = { lt1: "До 1 года", "1to3": "От 1 до 3 лет", gt3: "Более 3 лет" };
+function parseDate(d) {
+  const m = /^(\d{2})\.(\d{2})\.(\d{2})$/.exec(d || "");
+  return m ? Number(m[3]) * 10000 + Number(m[2]) * 100 + Number(m[1]) : 0;
+}
+
 function DetailRow({ label, value }) {
   return (
     <div className="sk-row" style={{ justifyContent: "space-between", padding: "6px 0" }}>
@@ -76,7 +94,7 @@ function ResumeCard({ r }) {
         <div className="sk-label-4">Резюме_{r.lastName}_{r.firstName}</div>
         <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Собрано из данных отклика</div>
       </div>
-      <Button mode="secondary" size="s" onClick={() => downloadResume(r)}>Скачать</Button>
+      <Button mode="secondary" size="s" icon={<IconDownload size={15} />} onClick={() => downloadResume(r)}>Скачать</Button>
     </div>
   );
 }
@@ -179,16 +197,63 @@ function Page() {
   // для перебора большого числа откликов. Карточки — альтернатива, когда откликов немного
   // и важнее сразу видеть начало сопроводительного письма.
   const [view, setView] = React.useState("table"); // "table" | "cards"
+  const [filtersOpen, setFiltersOpen] = React.useState(false);
+  const [filters, setFilters] = React.useState({ city: "", department: "", tenure: "" });
+  const [sortBy, setSortBy] = React.useState(null); // null | { key, dir: "asc" | "desc" }
+
+  const cityOptions = React.useMemo(() => [...new Set(responses.map((r) => r.city))].sort(), [responses]);
+  const departmentOptions = React.useMemo(() => [...new Set(responses.map((r) => r.department))].sort(), [responses]);
+  const hasActiveFilters = !!(filters.city || filters.department || filters.tenure);
+  const activeFilterCount = [filters.city, filters.department, filters.tenure].filter(Boolean).length;
 
   const needle = q.trim().toLowerCase();
   const filtered = React.useMemo(() => {
-    if (!needle) return responses;
-    return responses.filter((r) =>
-      (r.lastName + " " + r.firstName).toLowerCase().includes(needle) || r.position.toLowerCase().includes(needle));
-  }, [responses, needle]);
+    let list = responses;
+    if (needle) {
+      list = list.filter((r) =>
+        (r.lastName + " " + r.firstName).toLowerCase().includes(needle) || r.position.toLowerCase().includes(needle));
+    }
+    if (filters.city) list = list.filter((r) => r.city === filters.city);
+    if (filters.department) list = list.filter((r) => r.department === filters.department);
+    if (filters.tenure) list = list.filter((r) => tenureBucket(r.tenure) === filters.tenure);
+    if (sortBy) {
+      const dir = sortBy.dir === "asc" ? 1 : -1;
+      list = [...list].sort((a, b) => {
+        let av, bv;
+        if (sortBy.key === "name") { av = a.lastName + a.firstName; bv = b.lastName + b.firstName; }
+        else if (sortBy.key === "tenure") { av = parseTenureMonths(a.tenure); bv = parseTenureMonths(b.tenure); }
+        else if (sortBy.key === "city") { av = a.city; bv = b.city; }
+        else if (sortBy.key === "date") { av = parseDate(a.date); bv = parseDate(b.date); }
+        if (typeof av === "number" && typeof bv === "number") return (av - bv) * dir;
+        return String(av).localeCompare(String(bv), "ru") * dir;
+      });
+    }
+    return list;
+  }, [responses, needle, filters, sortBy]);
+
+  function toggleSort(key) {
+    setSortBy((s) => {
+      if (!s || s.key !== key) return { key, dir: "asc" };
+      if (s.dir === "asc") return { key, dir: "desc" };
+      return null;
+    });
+  }
+  function SortableHeader({ label, sortKey }) {
+    const active = sortBy && sortBy.key === sortKey;
+    return (
+      <button type="button" onClick={() => toggleSort(sortKey)} className="sk-row sk-gap-1 sk-clickable"
+        style={{ background: "none", border: "none", padding: 0, font: "inherit", color: active ? "var(--sk-text-primary)" : "inherit", cursor: "pointer", alignItems: "center" }}>
+        {label}
+        <span style={{ display: "inline-flex", flexDirection: "column", lineHeight: 0, opacity: active ? 1 : 0.35 }}>
+          <Icons.IconChevronUp size={11} style={{ marginBottom: -2, color: active && sortBy.dir === "asc" ? "var(--sk-text-accent)" : "currentColor" }} />
+          <Icons.IconChevronDown size={11} style={{ color: active && sortBy.dir === "desc" ? "var(--sk-text-accent)" : "currentColor" }} />
+        </span>
+      </button>
+    );
+  }
 
   const columns = [
-    { key: "name", title: "Кандидат", render: (r) => (
+    { key: "name", title: <SortableHeader label="Кандидат" sortKey="name" />, render: (r) => (
       <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
         <Avatar name={r.lastName + " " + r.firstName} size={32} />
         <span className="sk-label-3">{r.lastName} {r.firstName} {r.patronymic}</span>
@@ -200,23 +265,20 @@ function Page() {
         <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{r.department}</span>
       </div>
     ) },
-    { key: "tenure", title: "Стаж", render: (r) => <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{r.tenure}</span> },
-    { key: "city", title: "Город", render: (r) => <span className="sk-label-3-regular">{r.city}</span> },
-    { key: "letter", title: "Сопроводительное письмо", render: (r) => (
+    { key: "tenure", title: <SortableHeader label="Стаж" sortKey="tenure" />, render: (r) => <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{r.tenure}</span> },
+    { key: "city", title: <SortableHeader label="Город" sortKey="city" />, render: (r) => <span className="sk-label-3-regular">{r.city}</span> },
+    { key: "letter", title: "Сопроводительное письмо", width: 280, render: (r) => (
       r.letter ? (
-        <Tooltip content={<div style={{ maxWidth: 280, whiteSpace: "normal" }}>{r.letter}</div>}>
-          <span className="sk-label-4-regular" style={{
-            display: "block", maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-            color: "var(--sk-text-secondary)",
-          }}>{r.letter}</span>
-        </Tooltip>
+        <div className="sk-label-4-regular" style={{
+          color: "var(--sk-text-secondary)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
+        }}>{r.letter}</div>
       ) : (
         <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>—</span>
       )
     ) },
-    { key: "date", title: "Дата отклика", render: (r) => <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{r.date}</span> },
+    { key: "date", title: <SortableHeader label="Дата отклика" sortKey="date" />, render: (r) => <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{r.date}</span> },
     { key: "resume", title: "Резюме", width: 110, render: (r) => (
-      <Button mode="tertiary" size="s" icon={<IconFileText size={15} />} onClick={(e) => { e.stopPropagation(); downloadResume(r); }}>Скачать</Button>
+      <Button mode="tertiary" size="s" icon={<IconDownload size={15} />} onClick={(e) => { e.stopPropagation(); downloadResume(r); }}>Скачать</Button>
     ) },
   ];
 
@@ -236,9 +298,32 @@ function Page() {
       <div className="sk-row sk-gap-2" style={{ alignItems: "center", flexWrap: "wrap" }}>
         <Input size="s" icon={<IconSearch size={20} />} placeholder="Поиск по имени или должности"
           value={q} onChange={(e) => setQ(e.target.value || "")} style={{ maxWidth: 360, flex: 1 }} />
+        <Button mode="secondary" icon={<Icons.IconFilter size={16} />} onClick={() => setFiltersOpen((o) => !o)}
+          style={{ background: "var(--sk-surface-page)", border: "1px solid var(--sk-stroke)" }}>
+          Фильтры{hasActiveFilters ? " · " + activeFilterCount : ""}
+        </Button>
         <SegmentedControl size="s" active={view} onChange={setView}
           items={[{ id: "table", label: "Таблица" }, { id: "cards", label: "Карточки" }]} />
       </div>
+
+      {filtersOpen && (
+        <Card bordered>
+          <div className="sk-row sk-gap-3" style={{ flexWrap: "wrap", alignItems: "flex-end" }}>
+            <Select label="Город" value={filters.city} placeholder="Любой город"
+              options={cityOptions.map((c) => ({ value: c, label: c }))}
+              onChange={(v) => setFilters((f) => ({ ...f, city: v }))} style={{ minWidth: 180 }} />
+            <Select label="Подразделение" value={filters.department} placeholder="Любое подразделение"
+              options={departmentOptions.map((d) => ({ value: d, label: d }))}
+              onChange={(v) => setFilters((f) => ({ ...f, department: v }))} style={{ minWidth: 220 }} />
+            <Select label="Стаж в компании" value={filters.tenure} placeholder="Любой стаж"
+              options={Object.entries(TENURE_BUCKET_LABELS).map(([value, label]) => ({ value, label }))}
+              onChange={(v) => setFilters((f) => ({ ...f, tenure: v }))} style={{ minWidth: 180 }} />
+            {hasActiveFilters && (
+              <Button mode="tertiary" onClick={() => setFilters({ city: "", department: "", tenure: "" })}>Сбросить</Button>
+            )}
+          </div>
+        </Card>
+      )}
 
       <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Найдено откликов: {filtered.length}</div>
 

@@ -40,6 +40,9 @@ const IconPhone = mkIcon(<path d="M6.5 4.5h3l1.5 4-2 1.5a11 11 0 0 0 5 5l1.5-2 4
 const IconMail = mkIcon(<><rect x="3.5" y="5.5" width="17" height="13" rx="2" stroke="currentColor" strokeWidth="1.5" /><path d="M4.5 7l7.5 6 7.5-6" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></>);
 const IconSend = mkIcon(<path d="M4 12.2 20 4l-6.4 16-3-6.6L4 12.2Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />);
 const IconUpload = mkIcon(<><path d="M12 15.5V4.5M8 8.3 12 4.3l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M4.5 15.5v3a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></>);
+// Зеркало IconUpload — та же лента-трей снизу, стрелка развёрнута вниз (для кнопок
+// скачивания: резюме отклика, экспорт CSV и т.п.).
+const IconDownload = mkIcon(<><path d="M12 4.5V15.5M8 11.7 12 15.7l4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M4.5 15.5v3a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></>);
 const IconX = mkIcon(<path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />);
 // Иконка "Фильтры" по спеке ДС — два слайдер-трека с бегунками (как на hh.ru), а не
 // три убывающие полоски: так однозначнее читается как "настройка фильтров".
@@ -117,7 +120,7 @@ function IconCopyLocal2({ size = 16, color = "currentColor" }) {
 window.SiteIcons = {
   IconSearch, IconChevronDown, IconChevronUp, IconChevronRight, IconArrowLeft, IconCheck, IconLock, IconClock,
   IconFileText, IconLink2, IconMessageCircle, IconHelpCircle, IconInfo, IconBriefcase, IconUsers,
-  IconTarget, IconMapPin, IconPhone, IconMail, IconSend, IconUpload, IconX, IconFilter, IconAlertCircle,
+  IconTarget, IconMapPin, IconPhone, IconMail, IconSend, IconUpload, IconDownload, IconX, IconFilter, IconAlertCircle,
   IconGraduationCap, IconGift, IconLayers, IconPlusSm, IconEye, IconPaperclip, IconCalendar, IconUser,
   IconMoreHorizontal, IconEdit, IconTrash, IconFlag, IconSettings, IconClipboard, IconRocket, IconSparkles, IconSparklesSolid, IconBookOpen,
   IconUnlink, IconUserSwitch, IconRepeat, IconColumns, IconInbox, IconUserX, IconCopyLocal2, IconMic, IconImage,
