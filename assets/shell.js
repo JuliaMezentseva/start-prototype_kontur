@@ -65,7 +65,21 @@ const IconTrash = mkIcon(<><path d="M5 7.5h14" stroke="currentColor" strokeWidth
 const IconFlag = mkIcon(<><path d="M6 3.5v17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><path d="M6 4.5c2-1.3 4-1.3 6 0s4 1.3 6 0v8c-2 1.3-4 1.3-6 0s-4-1.3-6 0Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></>);
 // добавлено для роли "HR-Админ" — в исходном наборе иконок ДС нет шестерёнки настроек
 // и иконки списка задач/чек-листа для левого меню "Разделы плана" редактора адаптации.
-const IconSettings = mkIcon(<><circle cx="12" cy="12" r="2.8" stroke="currentColor" strokeWidth="1.5" /><path d="M12 4.5v2M12 17.5v2M19.5 12h-2M6.5 12h-2M17.4 6.6l-1.4 1.4M8 14.6l-1.4 1.4M17.4 17.4l-1.4-1.4M8 9.4 6.6 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></>);
+// Шестерёнка настроек: кольцо + 8 зубцов (закрашенные прямоугольники, повёрнутые
+// вокруг центра) — прежний вариант из тонких лучей на маленьком размере читался как
+// звёздочка/компас, а не как шестерёнка.
+const IconSettings = mkIcon(<>
+  <circle cx="12" cy="12" r="6.5" stroke="currentColor" strokeWidth="1.5" />
+  <circle cx="12" cy="12" r="2.6" stroke="currentColor" strokeWidth="1.5" />
+  <rect x="10.8" y="2.6" width="2.4" height="3.6" rx="0.7" fill="currentColor" />
+  <rect x="10.8" y="2.6" width="2.4" height="3.6" rx="0.7" fill="currentColor" transform="rotate(45 12 12)" />
+  <rect x="10.8" y="2.6" width="2.4" height="3.6" rx="0.7" fill="currentColor" transform="rotate(90 12 12)" />
+  <rect x="10.8" y="2.6" width="2.4" height="3.6" rx="0.7" fill="currentColor" transform="rotate(135 12 12)" />
+  <rect x="10.8" y="2.6" width="2.4" height="3.6" rx="0.7" fill="currentColor" transform="rotate(180 12 12)" />
+  <rect x="10.8" y="2.6" width="2.4" height="3.6" rx="0.7" fill="currentColor" transform="rotate(225 12 12)" />
+  <rect x="10.8" y="2.6" width="2.4" height="3.6" rx="0.7" fill="currentColor" transform="rotate(270 12 12)" />
+  <rect x="10.8" y="2.6" width="2.4" height="3.6" rx="0.7" fill="currentColor" transform="rotate(315 12 12)" />
+</>);
 const IconClipboard = mkIcon(<><rect x="6" y="5.5" width="12" height="15" rx="2" stroke="currentColor" strokeWidth="1.5" /><rect x="9" y="3.5" width="6" height="3.5" rx="1.2" stroke="currentColor" strokeWidth="1.5" /><path d="M9 12h6M9 15.5h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></>);
 const IconRocket = mkIcon(<><path d="M12 3c2.8 1.4 4.6 4.2 4.6 8 0 2-.6 3.7-1.6 5.1l-3-1-3 1c-1-1.4-1.6-3.1-1.6-5.1 0-3.8 1.8-6.6 4.6-8Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><circle cx="12" cy="10" r="1.6" stroke="currentColor" strokeWidth="1.4" /><path d="M9 15.5 7 18M15 15.5l2 2.5M10 19.5h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></>);
 // добавлено для сценария "Создание цели с ИИ-помощником" (роль Руководитель) — в наборе
