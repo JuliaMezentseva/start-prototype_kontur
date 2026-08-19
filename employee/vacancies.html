@@ -15,9 +15,9 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Card, Tag, Input, Select, Button, Checkbox, Tabs, Divider, Switch, Snackbar } = window.SkillazCoreDesignSystem_bf9566;
+const { Card, Tag, Input, Button, Checkbox, Tabs, Switch, Snackbar } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
-const { IconSearch, IconMapPin, IconBriefcase, IconX, IconChevronDown, IconSparklesSolid } = Icons;
+const { IconSearch, IconMapPin, IconBriefcase, IconX, IconChevronDown, IconFilter, IconSparklesSolid } = Icons;
 const D = window.SITE_DATA;
 
 // Переключатель "Витрина / Мои отклики" — это переход между двумя разными HTML-страницами
@@ -123,20 +123,35 @@ function SubscribeBar({ filters, hasActiveFilters, subscriptions, onSubscribe, o
 // проценты для пары карточек, чтобы показать сам вид индикатора.
 const DEMO_MATCH = { v1: 95, v2: 80 };
 
-// Компактный фильтр с небольшим числом вариантов (Опыт, Регион, Формат работы,
-// Тип занятости, Тип перехода) — обычный мультиселект-дропдаун, значения видны сразу
-// (заголовок + закрытый контрол), без отдельного шага "раскрыть раздел".
-function FilterSelect({ label, options, value, onChange }) {
-  return <Select size="s" label={label} multiple options={options} value={value} onChange={onChange} placeholder="Все варианты" />;
+// Бирка-саммари рядом с поиском: показывает общее число активных фильтров и разом
+// сбрасывает все — крестик виден только когда есть что сбрасывать. Клик по самой бирке
+// сворачивает/разворачивает ряд чипов ниже; по умолчанию ряд уже развёрнут.
+function FiltersSummaryChip({ count, open, onToggle, onReset }) {
+  const active = count > 0;
+  return (
+    <button type="button" onClick={onToggle} className="sk-clickable" style={{
+      display: "inline-flex", alignItems: "center", gap: 6, height: 40, padding: "0 14px",
+      borderRadius: "var(--sk-radius-full)", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
+      border: `1.5px solid ${active ? "var(--sk-stroke-accent)" : "var(--sk-stroke)"}`,
+      background: "var(--sk-surface-page)", font: "var(--sk-label-3-regular)",
+      color: active ? "var(--sk-text-accent)" : "var(--sk-text-primary)",
+    }}>
+      <IconFilter size={16} />
+      Фильтры{active ? " " + count : ""}
+      {active && (
+        <span onClick={(e) => { e.stopPropagation(); onReset(); }} style={{ display: "inline-flex", opacity: 0.7 }}>
+          <IconX size={14} />
+        </span>
+      )}
+    </button>
+  );
 }
 
-// Фильтр с потенциально длинным списком вариантов (Направление, Должность, Подразделение) —
-// оформлен как то же поле, что и компактные Select-фильтры рядом (закрытый контрол
-// с "Выбрано: N" / "Все варианты"), но по клику открывает попап с поиском и чекбоксами,
-// а не встроенный мультиселект — списку нужен поиск, которого у Select нет в этом наборе
-// компонентов. Первый пункт всегда "Моё …" (моя должность/подразделение/направление),
-// выделен и не исчезает при поиске, чтобы им можно было воспользоваться в одно движение.
-function FilterSearchDropdown({ label, options, value, onChange }) {
+// Единый чип-фильтр — пилюля со значением и крестиком, попап под ней открывает список
+// чекбоксов (плюс поиск для потенциально длинных справочников: Направление, Должность,
+// Подразделение). Для этих трёх первый пункт списка — "Моё …", закреплён и не пропадает
+// при поиске, чтобы им можно было воспользоваться в одно движение.
+function FilterChip({ label, options, value, onChange, searchable }) {
   const [open, setOpen] = React.useState(false);
   const [q, setQ] = React.useState("");
   const ref = React.useRef(null);
@@ -146,125 +161,90 @@ function FilterSearchDropdown({ label, options, value, onChange }) {
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, [open]);
+
+  const pinned = searchable ? options[0] : null;
+  const rest = searchable ? options.slice(1) : options;
   const needle = q.trim().toLowerCase();
-  const [pinned, ...rest] = options;
-  const pinnedShown = !needle || pinned.label.toLowerCase().includes(needle) || pinned.value.toLowerCase().includes(needle);
+  const pinnedShown = !pinned || !needle || pinned.label.toLowerCase().includes(needle);
   const restShown = needle ? rest.filter((o) => o.label.toLowerCase().includes(needle)) : rest;
+
   function toggle(v) { onChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v]); }
+
+  const valueLabel = value.length === 1 ? (options.find((o) => o.value === value[0]) || {}).label : null;
+
   return (
-    <div ref={ref} className="sk-col" style={{ gap: 6, position: "relative" }}>
-      <span className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>{label}</span>
-      <button type="button" onClick={() => setOpen((o) => !o)} style={{
-        display: "flex", alignItems: "center", gap: 8, height: 40, padding: "0 12px", width: "100%",
-        borderRadius: "var(--sk-radius-form)", border: "none", cursor: "pointer", textAlign: "left",
-        background: "var(--sk-surface-page)", boxShadow: `inset 0 0 0 ${open ? 2 : 1}px ${open ? "var(--sk-stroke-accent)" : "var(--sk-stroke)"}`,
-        font: "400 14px/20px var(--sk-font-ui)", color: value.length ? "var(--sk-text-primary)" : "var(--sk-text-placeholder)",
-        transition: "box-shadow var(--sk-duration) var(--sk-ease)",
+    <div ref={ref} style={{ position: "relative" }}>
+      <button type="button" onClick={() => setOpen((o) => !o)} className="sk-clickable" style={{
+        display: "inline-flex", alignItems: "center", gap: 6, height: 40, padding: "0 14px",
+        borderRadius: "var(--sk-radius-full)", cursor: "pointer", whiteSpace: "nowrap",
+        border: `1.5px solid ${value.length ? "var(--sk-stroke-accent)" : "var(--sk-stroke)"}`,
+        background: "var(--sk-surface-page)", font: "var(--sk-label-3-regular)",
+        color: value.length ? "var(--sk-text-accent)" : "var(--sk-text-primary)",
       }}>
-        <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {value.length ? `Выбрано: ${value.length}` : "Все варианты"}
-        </span>
-        <IconChevronDown size={16} style={{ opacity: 0.55, transform: open ? "rotate(180deg)" : "none", transition: "transform var(--sk-duration) var(--sk-ease)" }} />
+        {label}
+        {valueLabel && <span style={{ color: "var(--sk-text-secondary)" }}>: {valueLabel}</span>}
+        {value.length > 1 && <span>{value.length}</span>}
+        {value.length > 0 ? (
+          <span onClick={(e) => { e.stopPropagation(); onChange([]); }} style={{ display: "inline-flex", opacity: 0.7 }}>
+            <IconX size={13} />
+          </span>
+        ) : (
+          <IconChevronDown size={14} style={{ opacity: 0.55 }} />
+        )}
       </button>
       {open && (
         <div className="sk-col sk-gap-1" style={{
-          position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 50,
+          position: "absolute", top: "calc(100% + 4px)", left: 0, zIndex: 50, minWidth: 240, maxHeight: 320, overflowY: "auto",
           background: "var(--sk-surface-page)", borderRadius: "var(--sk-radius-3)", boxShadow: "var(--sk-shadow-m)", padding: 8,
         }}>
-          <div style={{ position: "relative" }}>
-            <IconSearch size={13} style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", opacity: 0.45, pointerEvents: "none" }} />
-            <input type="text" autoFocus value={q} onChange={(e) => setQ(e.target.value || "")} placeholder="Поиск" style={{
-              width: "100%", height: 28, padding: "0 8px 0 26px", boxSizing: "border-box", borderRadius: "var(--sk-radius-2)",
-              border: "1px solid var(--sk-stroke)", background: "var(--sk-surface-page)",
-              font: "var(--sk-label-4-regular)", color: "var(--sk-text-primary)", outline: "none",
-            }} />
-          </div>
-          <div className="sk-col" style={{ maxHeight: 200, overflowY: "auto" }}>
-            {pinnedShown && (
-              <label className="sk-row sk-gap-2" style={{
-                padding: "6px 4px", marginBottom: 2, cursor: "pointer", alignItems: "center",
-                borderBottom: "1px solid var(--sk-stroke)",
-              }}>
-                <Checkbox checked={value.includes(pinned.value)} onChange={() => toggle(pinned.value)} />
-                <span className="sk-label-4">{pinned.label}</span>
-              </label>
-            )}
-            {restShown.length ? restShown.map((o) => (
-              <label key={o.value} className="sk-row sk-gap-2" style={{ padding: "6px 4px", cursor: "pointer", alignItems: "center" }}>
-                <Checkbox checked={value.includes(o.value)} onChange={() => toggle(o.value)} />
-                <span className="sk-label-4-regular">{o.label}</span>
-              </label>
-            )) : (!pinnedShown && (
-              <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", padding: "6px 4px" }}>Ничего не найдено</div>
-            ))}
-          </div>
+          {searchable && (
+            <div style={{ position: "relative" }}>
+              <IconSearch size={13} style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", opacity: 0.45, pointerEvents: "none" }} />
+              <input type="text" autoFocus value={q} onChange={(e) => setQ(e.target.value || "")} placeholder="Поиск" style={{
+                width: "100%", height: 28, padding: "0 8px 0 26px", boxSizing: "border-box", borderRadius: "var(--sk-radius-2)",
+                border: "1px solid var(--sk-stroke)", background: "var(--sk-surface-page)",
+                font: "var(--sk-label-4-regular)", color: "var(--sk-text-primary)", outline: "none", marginBottom: 4,
+              }} />
+            </div>
+          )}
+          {pinned && pinnedShown && (
+            <label className="sk-row sk-gap-2" style={{
+              padding: "6px 4px", marginBottom: 2, cursor: "pointer", alignItems: "center",
+              borderBottom: "1px solid var(--sk-stroke)",
+            }}>
+              <Checkbox checked={value.includes(pinned.value)} onChange={() => toggle(pinned.value)} />
+              <span className="sk-label-4">{pinned.label}</span>
+            </label>
+          )}
+          {restShown.length ? restShown.map((o) => (
+            <label key={o.value} className="sk-row sk-gap-2" style={{ padding: "6px 4px", cursor: "pointer", alignItems: "center" }}>
+              <Checkbox checked={value.includes(o.value)} onChange={() => toggle(o.value)} />
+              <span className="sk-label-4-regular">{o.label}</span>
+            </label>
+          )) : (searchable && needle && !pinnedShown && (
+            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", padding: "6px 4px" }}>Ничего не найдено</div>
+          ))}
         </div>
       )}
     </div>
   );
 }
 
-// Фильтр с малым числом вариантов, показанный сразу раскрытым (Формат работы, Тип
-// занятости) — выбор в одно движение, без клика по полю. Обёрнут в собственный контур
-// (фон + рамка), иначе на фоне закрытых dropdown-полей рядом чекбоксы без контейнера
-// выглядят "голыми" и панель теряет единый ритм.
-function FilterCheckboxGroup({ label, options, value, onChange }) {
-  function toggle(v) { onChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v]); }
-  return (
-    <div className="sk-col sk-gap-2" style={{
-      padding: "10px 12px", borderRadius: "var(--sk-radius-form)",
-      background: "var(--sk-surface-secondary)",
-    }}>
-      <span style={{ font: value.length ? "var(--sk-label-3)" : "var(--sk-label-3-regular)", color: "var(--sk-text-primary)" }}>
-        {label}{value.length ? " · " + value.length : ""}
-      </span>
-      <div className="sk-col sk-gap-1">
-        {options.map((o) => (
-          <label key={o.value} className="sk-row sk-gap-2" style={{ padding: "3px 0", cursor: "pointer", alignItems: "center" }}>
-            <Checkbox checked={value.includes(o.value)} onChange={() => toggle(o.value)} />
-            <span className="sk-label-4-regular">{o.label}</span>
-          </label>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// Боковая панель фильтров — справа от списка вакансий (там же, где раньше жила панель
-// направлений); "Направление" стало первым фильтром в общем списке, а не отдельным блоком.
-// Разделитель стоит только под заголовком и перед блоком подписки — это две смысловые
-// границы (заголовок → фильтры → уведомления), а не украшение между каждым полем.
-function FiltersPanel({ filters, onChange, hasActiveFilters, onReset, directionOptions, positionOptions, departmentOptions, subscriptions, onSubscribe, onUnsubscribe }) {
+// Ряд чипов — все фильтры видны сразу (без промежуточного шага "+ Фильтр"), значения
+// сразу показаны на самом чипе, а не спрятаны в закрытом поле сбоку.
+function FiltersChipsRow({ filters, onChange, directionOptions, positionOptions, departmentOptions }) {
   const set = (key) => (v) => onChange((f) => ({ ...f, [key]: v }));
   return (
-    <Card bordered style={{ width: 300, flexShrink: 0, padding: 20 }}>
-      <div className="sk-col sk-gap-4">
-        <div className="sk-col sk-gap-3">
-          <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "center" }}>
-            <div className="sk-label-2">Фильтры</div>
-            {hasActiveFilters && (
-              <button type="button" className="sk-link-btn sk-label-4-regular" onClick={onReset}>Сбросить всё</button>
-            )}
-          </div>
-          <Divider />
-        </div>
-        <div className="sk-col sk-gap-4">
-          <FilterSearchDropdown label="Направление" options={directionOptions} value={filters.directions} onChange={set("directions")} />
-          <FilterSearchDropdown label="Должность" options={positionOptions} value={filters.positions} onChange={set("positions")} />
-          <FilterSelect label="Тип перехода" options={toOptions(D.transitionTypes)} value={filters.transitionTypes} onChange={set("transitionTypes")} />
-          <FilterSearchDropdown label="Подразделение" options={departmentOptions} value={filters.departments} onChange={set("departments")} />
-          <FilterSelect label="Опыт" options={toOptions(D.experienceOptions)} value={filters.experience} onChange={set("experience")} />
-          <FilterSelect label="Регион" options={toOptions(D.cities)} value={filters.cities} onChange={set("cities")} />
-          <FilterCheckboxGroup label="Формат работы" options={toOptions(D.workFormats)} value={filters.formats} onChange={set("formats")} />
-          <FilterCheckboxGroup label="Тип занятости" options={toOptions(D.employmentTypes)} value={filters.employments} onChange={set("employments")} />
-        </div>
-        <div className="sk-col sk-gap-3">
-          <Divider />
-          <SubscribeBar filters={filters} hasActiveFilters={hasActiveFilters} subscriptions={subscriptions}
-            onSubscribe={onSubscribe} onUnsubscribe={onUnsubscribe} />
-        </div>
-      </div>
-    </Card>
+    <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>
+      <FilterChip label="Направление" searchable options={directionOptions} value={filters.directions} onChange={set("directions")} />
+      <FilterChip label="Должность" searchable options={positionOptions} value={filters.positions} onChange={set("positions")} />
+      <FilterChip label="Подразделение" searchable options={departmentOptions} value={filters.departments} onChange={set("departments")} />
+      <FilterChip label="Опыт" options={toOptions(D.experienceOptions)} value={filters.experience} onChange={set("experience")} />
+      <FilterChip label="Регион" options={toOptions(D.cities)} value={filters.cities} onChange={set("cities")} />
+      <FilterChip label="Формат работы" options={toOptions(D.workFormats)} value={filters.formats} onChange={set("formats")} />
+      <FilterChip label="Тип занятости" options={toOptions(D.employmentTypes)} value={filters.employments} onChange={set("employments")} />
+      <FilterChip label="Тип перехода" options={toOptions(D.transitionTypes)} value={filters.transitionTypes} onChange={set("transitionTypes")} />
+    </div>
   );
 }
 
@@ -325,6 +305,7 @@ function Page() {
 
   const [q, setQ] = React.useState("");
   const [filters, setFilters] = React.useState(emptyFilters);
+  const [filtersOpen, setFiltersOpen] = React.useState(true);
   const [subscriptions, setSubscriptions] = React.useState([]);
   const [toast, setToast] = React.useState(null);
   function showToast(msg) { setToast(msg); window.setTimeout(() => setToast(null), 3200); }
@@ -381,7 +362,8 @@ function Page() {
       <div className="sk-col sk-gap-3">
         <div className="sk-row sk-gap-2" style={{ alignItems: "center", flexWrap: "wrap" }}>
           <Input size="s" icon={<IconSearch size={20} />} placeholder="По названию, должности или подразделению"
-            value={q} onChange={(e) => setQ(e.target.value || "")} style={{ width: 460, flexShrink: 0 }} />
+            value={q} onChange={(e) => setQ(e.target.value || "")} style={{ width: 400, flexShrink: 0 }} />
+          <FiltersSummaryChip count={activeFilterCount} open={filtersOpen} onToggle={() => setFiltersOpen((o) => !o)} onReset={() => setFilters(emptyFilters)} />
           {/* Поиск с AI: открывает общий дровер-помощник (см. AiAssistantWidget в assets/shell.js)
               и сразу прогоняет запрос подбора, чтобы список подходящих вакансий появился без
               дополнительного клика по чипу внутри чата. */}
@@ -391,25 +373,25 @@ function Page() {
           </Button>
         </div>
 
+        {filtersOpen && (
+          <FiltersChipsRow filters={filters} onChange={setFilters}
+            directionOptions={directionOptions} positionOptions={positionOptions} departmentOptions={departmentOptions} />
+        )}
+
+        <SubscribeBar filters={filters} hasActiveFilters={hasActiveFilters} subscriptions={subscriptions}
+          onSubscribe={subscribe} onUnsubscribe={unsubscribe} />
+
         <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Найдено вакансий: {filtered.length}</div>
 
-        <div className="sk-row" style={{ alignItems: "flex-start", gap: 24 }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {filtered.length === 0 ? (
-              <Card><div className="sk-muted" style={{ textAlign: "center", padding: "24px 0" }}>Ничего не нашлось по заданным условиям.</div></Card>
-            ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
-                {filtered.map((v) => (
-                  <VacancyCard key={v.id} vacancy={v} hasResponse={respondedIds.has(v.id)} matchPercent={DEMO_MATCH[v.id]} />
-                ))}
-              </div>
-            )}
+        {filtered.length === 0 ? (
+          <Card><div className="sk-muted" style={{ textAlign: "center", padding: "24px 0" }}>Ничего не нашлось по заданным условиям.</div></Card>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
+            {filtered.map((v) => (
+              <VacancyCard key={v.id} vacancy={v} hasResponse={respondedIds.has(v.id)} matchPercent={DEMO_MATCH[v.id]} />
+            ))}
           </div>
-
-          <FiltersPanel filters={filters} onChange={setFilters} hasActiveFilters={hasActiveFilters} onReset={() => setFilters(emptyFilters)}
-            directionOptions={directionOptions} positionOptions={positionOptions} departmentOptions={departmentOptions}
-            subscriptions={subscriptions} onSubscribe={subscribe} onUnsubscribe={unsubscribe} />
-        </div>
+        )}
       </div>
       {toast && (
         <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 100 }}>
