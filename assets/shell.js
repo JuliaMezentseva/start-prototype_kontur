@@ -871,7 +871,7 @@ function AiResultCardBody({ r }) {
             flexShrink: 0, display: "inline-flex", alignItems: "center", height: 20, padding: "0 8px",
             borderRadius: "var(--sk-radius-full)", background: "var(--sk-special-secondary)",
             color: "var(--sk-icon-special)", font: "var(--sk-label-4)",
-          }}>Подходит на {r.matchPct}%</span>
+          }}>Подходите на {r.matchPct}%</span>
         )}
       </div>
       <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", marginTop: 2 }}>{r.subtitle}</div>

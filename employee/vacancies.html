@@ -274,7 +274,7 @@ function VacancyCard({ vacancy, hasResponse, matchPercent }) {
           <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap", opacity: dim }}>
             {matchPercent != null && (
               <Tag size="s" pill icon={<IconSparklesSolid size={12} />} style={{ background: "var(--sk-special-secondary)", color: "rgb(117,59,233)" }}>
-                Подходит на {Math.round(matchPercent)}%
+                Подходите на {Math.round(matchPercent)}%
               </Tag>
             )}
             <Tag size="s" hue="gray" pill>{vacancy.transitionType}</Tag>
