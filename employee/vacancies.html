@@ -15,7 +15,7 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Card, Tag, Input, Select, Button, Checkbox, Tabs, Switch, Snackbar } = window.SkillazCoreDesignSystem_bf9566;
+const { Card, Tag, Input, Select, Button, Checkbox, Tabs, Divider, Switch, Snackbar } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
 const { IconSearch, IconMapPin, IconBriefcase, IconX, IconChevronDown, IconSparklesSolid } = Icons;
 const D = window.SITE_DATA;
@@ -205,18 +205,22 @@ function FilterSearchDropdown({ label, options, value, onChange }) {
 }
 
 // Фильтр с малым числом вариантов, показанный сразу раскрытым (Формат работы, Тип
-// занятости) — выбор в одно движение, без клика по полю: вариантов слишком мало,
-// чтобы прятать их за дропдауном.
+// занятости) — выбор в одно движение, без клика по полю. Обёрнут в собственный контур
+// (фон + рамка), иначе на фоне закрытых dropdown-полей рядом чекбоксы без контейнера
+// выглядят "голыми" и панель теряет единый ритм.
 function FilterCheckboxGroup({ label, options, value, onChange }) {
   function toggle(v) { onChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v]); }
   return (
-    <div className="sk-col sk-gap-2">
+    <div className="sk-col sk-gap-2" style={{
+      padding: "10px 12px", borderRadius: "var(--sk-radius-form)",
+      background: "var(--sk-surface-secondary)",
+    }}>
       <span style={{ font: value.length ? "var(--sk-label-3)" : "var(--sk-label-3-regular)", color: "var(--sk-text-primary)" }}>
         {label}{value.length ? " · " + value.length : ""}
       </span>
       <div className="sk-col sk-gap-1">
         {options.map((o) => (
-          <label key={o.value} className="sk-row sk-gap-2" style={{ padding: "4px 2px", cursor: "pointer", alignItems: "center" }}>
+          <label key={o.value} className="sk-row sk-gap-2" style={{ padding: "3px 0", cursor: "pointer", alignItems: "center" }}>
             <Checkbox checked={value.includes(o.value)} onChange={() => toggle(o.value)} />
             <span className="sk-label-4-regular">{o.label}</span>
           </label>
@@ -228,27 +232,37 @@ function FilterCheckboxGroup({ label, options, value, onChange }) {
 
 // Боковая панель фильтров — справа от списка вакансий (там же, где раньше жила панель
 // направлений); "Направление" стало первым фильтром в общем списке, а не отдельным блоком.
+// Разделитель стоит только под заголовком и перед блоком подписки — это две смысловые
+// границы (заголовок → фильтры → уведомления), а не украшение между каждым полем.
 function FiltersPanel({ filters, onChange, hasActiveFilters, onReset, directionOptions, positionOptions, departmentOptions, subscriptions, onSubscribe, onUnsubscribe }) {
   const set = (key) => (v) => onChange((f) => ({ ...f, [key]: v }));
   return (
-    <Card bordered style={{ width: 280, flexShrink: 0, padding: 16 }}>
-      <div className="sk-col sk-gap-3">
-        <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "center" }}>
-          <div className="sk-label-2">Фильтры</div>
-          {hasActiveFilters && (
-            <button type="button" className="sk-link-btn sk-label-4-regular" onClick={onReset}>Сбросить</button>
-          )}
+    <Card bordered style={{ width: 300, flexShrink: 0, padding: 20 }}>
+      <div className="sk-col sk-gap-4">
+        <div className="sk-col sk-gap-3">
+          <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+            <div className="sk-label-2">Фильтры</div>
+            {hasActiveFilters && (
+              <button type="button" className="sk-link-btn sk-label-4-regular" onClick={onReset}>Сбросить всё</button>
+            )}
+          </div>
+          <Divider />
         </div>
-        <FilterSearchDropdown label="Направление" options={directionOptions} value={filters.directions} onChange={set("directions")} />
-        <FilterSearchDropdown label="Должность" options={positionOptions} value={filters.positions} onChange={set("positions")} />
-        <FilterSelect label="Тип перехода" options={toOptions(D.transitionTypes)} value={filters.transitionTypes} onChange={set("transitionTypes")} />
-        <FilterSearchDropdown label="Подразделение" options={departmentOptions} value={filters.departments} onChange={set("departments")} />
-        <FilterSelect label="Опыт" options={toOptions(D.experienceOptions)} value={filters.experience} onChange={set("experience")} />
-        <FilterSelect label="Регион" options={toOptions(D.cities)} value={filters.cities} onChange={set("cities")} />
-        <FilterCheckboxGroup label="Формат работы" options={toOptions(D.workFormats)} value={filters.formats} onChange={set("formats")} />
-        <FilterCheckboxGroup label="Тип занятости" options={toOptions(D.employmentTypes)} value={filters.employments} onChange={set("employments")} />
-        <SubscribeBar filters={filters} hasActiveFilters={hasActiveFilters} subscriptions={subscriptions}
-          onSubscribe={onSubscribe} onUnsubscribe={onUnsubscribe} />
+        <div className="sk-col sk-gap-4">
+          <FilterSearchDropdown label="Направление" options={directionOptions} value={filters.directions} onChange={set("directions")} />
+          <FilterSearchDropdown label="Должность" options={positionOptions} value={filters.positions} onChange={set("positions")} />
+          <FilterSelect label="Тип перехода" options={toOptions(D.transitionTypes)} value={filters.transitionTypes} onChange={set("transitionTypes")} />
+          <FilterSearchDropdown label="Подразделение" options={departmentOptions} value={filters.departments} onChange={set("departments")} />
+          <FilterSelect label="Опыт" options={toOptions(D.experienceOptions)} value={filters.experience} onChange={set("experience")} />
+          <FilterSelect label="Регион" options={toOptions(D.cities)} value={filters.cities} onChange={set("cities")} />
+          <FilterCheckboxGroup label="Формат работы" options={toOptions(D.workFormats)} value={filters.formats} onChange={set("formats")} />
+          <FilterCheckboxGroup label="Тип занятости" options={toOptions(D.employmentTypes)} value={filters.employments} onChange={set("employments")} />
+        </div>
+        <div className="sk-col sk-gap-3">
+          <Divider />
+          <SubscribeBar filters={filters} hasActiveFilters={hasActiveFilters} subscriptions={subscriptions}
+            onSubscribe={onSubscribe} onUnsubscribe={onUnsubscribe} />
+        </div>
       </div>
     </Card>
   );
