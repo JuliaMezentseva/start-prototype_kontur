@@ -16,7 +16,7 @@
 <div id="root"></div>
 <script type="text/babel">
 const { Card, Tag, TextList, Divider, Modal, Input, Textarea, Select, Button, Avatar, Snackbar, Alert } = window.SkillazCoreDesignSystem_bf9566;
-const { AppShell, StatusTag, Icons, directionHue } = window.Site;
+const { AppShell, StatusTag, Icons } = window.Site;
 const { IconArrowLeft, IconMapPin, IconMail, IconPhone, IconUpload, IconFileText, IconTarget, IconCheck, IconGift, IconLayers, IconClock, IconPlusSm, IconBriefcase } = Icons;
 const D = window.SITE_DATA;
 
@@ -118,7 +118,7 @@ function Page() {
       <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
         <div className="sk-col sk-gap-3" style={{ flex: 1 }}>
           <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap", alignItems: "center" }}>
-            <Tag size="s" hue={directionHue(vacancy.direction)}>{vacancy.direction}</Tag>
+            <Tag size="s" hue="gray">{vacancy.transitionType}</Tag>
             {closed
               ? <Tag size="s" hue="neutral">Закрыта</Tag>
               : <Tag size="s" hue="positive" icon={<IconCheck size={12} />}>Идёт поиск</Tag>}

@@ -15,7 +15,7 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Card, Tag, Input, Select, Button, Checkbox, Tabs, Divider, Switch, Snackbar } = window.SkillazCoreDesignSystem_bf9566;
+const { Card, Tag, Input, Select, Button, Checkbox, Tabs, Switch, Snackbar } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
 const { IconSearch, IconMapPin, IconBriefcase, IconX, IconChevronDown, IconSparklesSolid } = Icons;
 const D = window.SITE_DATA;
@@ -127,47 +127,62 @@ const DEMO_MATCH = { v1: 95, v2: 80 };
 // Тип занятости, Тип перехода) — обычный мультиселект-дропдаун, значения видны сразу
 // (заголовок + закрытый контрол), без отдельного шага "раскрыть раздел".
 function FilterSelect({ label, options, value, onChange }) {
-  return <Select label={label} multiple options={options} value={value} onChange={onChange} placeholder="Все варианты" />;
+  return <Select size="s" label={label} multiple options={options} value={value} onChange={onChange} placeholder="Все варианты" />;
 }
 
 // Фильтр с потенциально длинным списком вариантов (Направление, Должность, Подразделение) —
-// свёрнут по умолчанию, как и компактные Select-фильтры рядом (иначе поиск+список
-// перевешивают панель по высоте и выбиваются из общего вида). Первый пункт списка —
-// всегда "Моё …" (моя должность/подразделение/направление), выделен и не исчезает при
-// поиске, чтобы им можно было воспользоваться в одно движение, не печатая ничего.
-function FilterSearchList({ label, options, value, onChange }) {
+// оформлен как то же поле, что и компактные Select-фильтры рядом (закрытый контрол
+// с "Выбрано: N" / "Все варианты"), но по клику открывает попап с поиском и чекбоксами,
+// а не встроенный мультиселект — списку нужен поиск, которого у Select нет в этом наборе
+// компонентов. Первый пункт всегда "Моё …" (моя должность/подразделение/направление),
+// выделен и не исчезает при поиске, чтобы им можно было воспользоваться в одно движение.
+function FilterSearchDropdown({ label, options, value, onChange }) {
   const [open, setOpen] = React.useState(false);
   const [q, setQ] = React.useState("");
+  const ref = React.useRef(null);
+  React.useEffect(() => {
+    if (!open) return;
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
   const needle = q.trim().toLowerCase();
   const [pinned, ...rest] = options;
   const pinnedShown = !needle || pinned.label.toLowerCase().includes(needle) || pinned.value.toLowerCase().includes(needle);
   const restShown = needle ? rest.filter((o) => o.label.toLowerCase().includes(needle)) : rest;
   function toggle(v) { onChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v]); }
   return (
-    <div className="sk-col sk-gap-2">
-      <button type="button" onClick={() => setOpen((o) => !o)} className="sk-clickable" style={{
-        display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%",
-        background: "none", border: "none", padding: 0, cursor: "pointer",
+    <div ref={ref} className="sk-col" style={{ gap: 6, position: "relative" }}>
+      <span className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>{label}</span>
+      <button type="button" onClick={() => setOpen((o) => !o)} style={{
+        display: "flex", alignItems: "center", gap: 8, height: 40, padding: "0 12px", width: "100%",
+        borderRadius: "var(--sk-radius-form)", border: "none", cursor: "pointer", textAlign: "left",
+        background: "var(--sk-surface-page)", boxShadow: `inset 0 0 0 ${open ? 2 : 1}px ${open ? "var(--sk-stroke-accent)" : "var(--sk-stroke)"}`,
+        font: "400 14px/20px var(--sk-font-ui)", color: value.length ? "var(--sk-text-primary)" : "var(--sk-text-placeholder)",
+        transition: "box-shadow var(--sk-duration) var(--sk-ease)",
       }}>
-        <span style={{ font: value.length ? "var(--sk-label-3)" : "var(--sk-label-3-regular)", color: "var(--sk-text-primary)" }}>
-          {label}{value.length ? " · " + value.length : ""}
+        <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {value.length ? `Выбрано: ${value.length}` : "Все варианты"}
         </span>
-        <IconChevronDown size={14} style={{ opacity: 0.55, transform: open ? "rotate(180deg)" : "none", transition: "transform var(--sk-duration) var(--sk-ease)" }} />
+        <IconChevronDown size={16} style={{ opacity: 0.55, transform: open ? "rotate(180deg)" : "none", transition: "transform var(--sk-duration) var(--sk-ease)" }} />
       </button>
       {open && (
-        <div className="sk-col sk-gap-1">
+        <div className="sk-col sk-gap-1" style={{
+          position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 50,
+          background: "var(--sk-surface-page)", borderRadius: "var(--sk-radius-3)", boxShadow: "var(--sk-shadow-m)", padding: 8,
+        }}>
           <div style={{ position: "relative" }}>
             <IconSearch size={13} style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", opacity: 0.45, pointerEvents: "none" }} />
-            <input type="text" value={q} onChange={(e) => setQ(e.target.value || "")} placeholder="Поиск" style={{
+            <input type="text" autoFocus value={q} onChange={(e) => setQ(e.target.value || "")} placeholder="Поиск" style={{
               width: "100%", height: 28, padding: "0 8px 0 26px", boxSizing: "border-box", borderRadius: "var(--sk-radius-2)",
               border: "1px solid var(--sk-stroke)", background: "var(--sk-surface-page)",
               font: "var(--sk-label-4-regular)", color: "var(--sk-text-primary)", outline: "none",
             }} />
           </div>
-          <div className="sk-col" style={{ maxHeight: 160, overflowY: "auto" }}>
+          <div className="sk-col" style={{ maxHeight: 200, overflowY: "auto" }}>
             {pinnedShown && (
               <label className="sk-row sk-gap-2" style={{
-                padding: "5px 2px", marginBottom: 2, cursor: "pointer", alignItems: "center",
+                padding: "6px 4px", marginBottom: 2, cursor: "pointer", alignItems: "center",
                 borderBottom: "1px solid var(--sk-stroke)",
               }}>
                 <Checkbox checked={value.includes(pinned.value)} onChange={() => toggle(pinned.value)} />
@@ -175,16 +190,38 @@ function FilterSearchList({ label, options, value, onChange }) {
               </label>
             )}
             {restShown.length ? restShown.map((o) => (
-              <label key={o.value} className="sk-row sk-gap-2" style={{ padding: "5px 2px", cursor: "pointer", alignItems: "center" }}>
+              <label key={o.value} className="sk-row sk-gap-2" style={{ padding: "6px 4px", cursor: "pointer", alignItems: "center" }}>
                 <Checkbox checked={value.includes(o.value)} onChange={() => toggle(o.value)} />
                 <span className="sk-label-4-regular">{o.label}</span>
               </label>
             )) : (!pinnedShown && (
-              <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", padding: "5px 2px" }}>Ничего не найдено</div>
+              <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", padding: "6px 4px" }}>Ничего не найдено</div>
             ))}
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// Фильтр с малым числом вариантов, показанный сразу раскрытым (Формат работы, Тип
+// занятости) — выбор в одно движение, без клика по полю: вариантов слишком мало,
+// чтобы прятать их за дропдауном.
+function FilterCheckboxGroup({ label, options, value, onChange }) {
+  function toggle(v) { onChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v]); }
+  return (
+    <div className="sk-col sk-gap-2">
+      <span style={{ font: value.length ? "var(--sk-label-3)" : "var(--sk-label-3-regular)", color: "var(--sk-text-primary)" }}>
+        {label}{value.length ? " · " + value.length : ""}
+      </span>
+      <div className="sk-col sk-gap-1">
+        {options.map((o) => (
+          <label key={o.value} className="sk-row sk-gap-2" style={{ padding: "4px 2px", cursor: "pointer", alignItems: "center" }}>
+            <Checkbox checked={value.includes(o.value)} onChange={() => toggle(o.value)} />
+            <span className="sk-label-4-regular">{o.label}</span>
+          </label>
+        ))}
+      </div>
     </div>
   );
 }
@@ -195,25 +232,21 @@ function FiltersPanel({ filters, onChange, hasActiveFilters, onReset, directionO
   const set = (key) => (v) => onChange((f) => ({ ...f, [key]: v }));
   return (
     <Card bordered style={{ width: 280, flexShrink: 0, padding: 16 }}>
-      <div className="sk-col sk-gap-4">
+      <div className="sk-col sk-gap-3">
         <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "center" }}>
           <div className="sk-label-2">Фильтры</div>
           {hasActiveFilters && (
             <button type="button" className="sk-link-btn sk-label-4-regular" onClick={onReset}>Сбросить</button>
           )}
         </div>
-        <FilterSearchList label="Направление" options={directionOptions} value={filters.directions} onChange={set("directions")} />
-        <Divider />
-        <FilterSearchList label="Должность" options={positionOptions} value={filters.positions} onChange={set("positions")} />
-        <Divider />
-        <FilterSearchList label="Подразделение" options={departmentOptions} value={filters.departments} onChange={set("departments")} />
-        <Divider />
+        <FilterSearchDropdown label="Направление" options={directionOptions} value={filters.directions} onChange={set("directions")} />
+        <FilterSearchDropdown label="Должность" options={positionOptions} value={filters.positions} onChange={set("positions")} />
+        <FilterSelect label="Тип перехода" options={toOptions(D.transitionTypes)} value={filters.transitionTypes} onChange={set("transitionTypes")} />
+        <FilterSearchDropdown label="Подразделение" options={departmentOptions} value={filters.departments} onChange={set("departments")} />
         <FilterSelect label="Опыт" options={toOptions(D.experienceOptions)} value={filters.experience} onChange={set("experience")} />
         <FilterSelect label="Регион" options={toOptions(D.cities)} value={filters.cities} onChange={set("cities")} />
-        <FilterSelect label="Формат работы" options={toOptions(D.workFormats)} value={filters.formats} onChange={set("formats")} />
-        <FilterSelect label="Тип занятости" options={toOptions(D.employmentTypes)} value={filters.employments} onChange={set("employments")} />
-        <FilterSelect label="Тип перехода" options={toOptions(D.transitionTypes)} value={filters.transitionTypes} onChange={set("transitionTypes")} />
-        <Divider />
+        <FilterCheckboxGroup label="Формат работы" options={toOptions(D.workFormats)} value={filters.formats} onChange={set("formats")} />
+        <FilterCheckboxGroup label="Тип занятости" options={toOptions(D.employmentTypes)} value={filters.employments} onChange={set("employments")} />
         <SubscribeBar filters={filters} hasActiveFilters={hasActiveFilters} subscriptions={subscriptions}
           onSubscribe={onSubscribe} onUnsubscribe={onUnsubscribe} />
       </div>
@@ -242,7 +275,7 @@ function VacancyCard({ vacancy, hasResponse, matchPercent }) {
               ? <Tag size="s" hue="positive" icon={<IconThumbUp size={13} />}>Уже откликнулись</Tag>
               : closed
                 ? <Tag size="s" hue="neutral">Закрыта</Tag>
-                : (vacancy.isNew && <Tag size="s" style={{ background: "var(--sk-accent)", color: "var(--sk-text-contrast)" }}>Новая</Tag>)}
+                : (vacancy.isNew && <Tag size="s" pill style={{ background: "var(--sk-accent)", color: "var(--sk-text-contrast)" }}>Новая</Tag>)}
           </div>
 
           <div className="sk-label-3-regular" style={{ opacity: dim }}>

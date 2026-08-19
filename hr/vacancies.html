@@ -343,7 +343,7 @@ function Page() {
           <Tooltip content={<div style={{ maxWidth: 200, whiteSpace: "normal" }}>Импорт из Excel — вне текущей итерации прототипа.</div>}>
             <Button style={{ background: "var(--sk-accent-secondary)", color: "var(--sk-text-accent)" }} icon={<IconUpload size={16} />} disabled>Загрузить вакансии</Button>
           </Tooltip>
-          <Button variant="accent" icon={<IconPlusSm size={16} />} onClick={() => setFormModal({ mode: "create" })}>Создать вакансию</Button>
+          <Button variant="accent" icon={<IconPlusSm size={16} />} onClick={() => { window.location.href = "vacancy-new.html"; }}>Создать вакансию</Button>
         </div>
       </div>
       <VacanciesModeTabs active="manage" />

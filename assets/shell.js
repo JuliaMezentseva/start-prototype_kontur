@@ -998,18 +998,44 @@ function AiAssistantWidget({ role }) {
   const [input, setInput] = React.useState("");
   const [thinking, setThinking] = React.useState(false);
   const scrollRef = React.useRef(null);
+  const msgRefs = React.useRef({});
+  // Индекс сообщения, к которому надо прокрутить сразу после рендера — используется
+  // только при открытии дровера снаружи (см. __skAiOpenAssistant), чтобы показать диалог
+  // начиная с сообщения-запроса, а не с самого низа переписки.
+  const [scrollToMsgIndex, setScrollToMsgIndex] = React.useState(null);
+  // После прокрутки к конкретному сообщению дальше НЕ следуем автоматически к низу при
+  // приходе ответа ИИ — пользователь сам долистает, когда захочет; обычный чат (открытие
+  // кнопкой-шариком, ручной ввод) продолжает по умолчанию ехать к последнему сообщению.
+  const autoScrollRef = React.useRef(true);
 
   React.useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (!scrollRef.current) return;
+    if (scrollToMsgIndex != null) {
+      if (msgRefs.current[scrollToMsgIndex]) msgRefs.current[scrollToMsgIndex].scrollIntoView({ block: "start" });
+      setScrollToMsgIndex(null);
+      autoScrollRef.current = false;
+      return;
+    }
+    if (autoScrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, thinking, open]);
 
   // Точка входа для кнопок вне виджета ("Вакансии для меня" на витрине сотрудника) —
   // открывает дровер и сразу прогоняет запрос, как если бы его отправили в чат. Регистрируем
   // на каждый рендер (не только на монтирование), чтобы замыкание всегда видело актуальный send.
   React.useEffect(() => {
-    window.__skAiOpenAssistant = (query) => { setOpen(true); if (query) send(query); };
+    window.__skAiOpenAssistant = (query) => {
+      setOpen(true);
+      if (query) { setScrollToMsgIndex(messages.length); send(query); }
+    };
     return () => { delete window.__skAiOpenAssistant; };
   });
+
+  // Ручная отправка (чип или поле ввода) — если до этого дровер был открыт кнопкой снаружи
+  // и автопрокрутка была выключена, возвращаем обычное поведение чата.
+  function sendFromUser(text) {
+    autoScrollRef.current = true;
+    send(text);
+  }
 
   const greetingText = config
     ? AI_GREETING
@@ -1090,7 +1116,7 @@ function AiAssistantWidget({ role }) {
             {config && config.chips.length > 0 && (
               <div className="sk-col sk-gap-2">
                 {config.chips.map((c) => (
-                  <button key={c} onClick={() => send(c)} className="sk-clickable" style={{
+                  <button key={c} onClick={() => sendFromUser(c)} className="sk-clickable" style={{
                     display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left",
                     border: "1px solid var(--sk-stroke)", background: "var(--sk-surface-page)",
                     borderRadius: "var(--sk-radius-3)", padding: "10px 14px", font: "var(--sk-label-3-regular)",
@@ -1102,17 +1128,21 @@ function AiAssistantWidget({ role }) {
                 ))}
               </div>
             )}
-            {messages.map((m, i) => <AiBubble key={i} from={m.from} text={m.text} results={m.results} confirm={m.confirm} onSend={send} />)}
+            {messages.map((m, i) => (
+              <div key={i} ref={(el) => { msgRefs.current[i] = el; }}>
+                <AiBubble from={m.from} text={m.text} results={m.results} confirm={m.confirm} onSend={sendFromUser} />
+              </div>
+            ))}
             {thinking && <AiBubble from="ai" thinking />}
           </div>
           <div style={{ flexShrink: 0, borderTop: "1px solid var(--sk-stroke-divider)", padding: 14 }}>
             <div className="sk-row sk-gap-2">
               <Input size="s" placeholder="Спросите что-нибудь…" value={input}
                 onChange={(e) => setInput(e.target.value || "")}
-                onKeyDown={(e) => { if (e.key === "Enter") send(input); }}
+                onKeyDown={(e) => { if (e.key === "Enter") sendFromUser(input); }}
                 style={{ flex: 1 }} />
               <IconButton size="s" mode="primary" variant="accent" disabled={!input.trim()}
-                onClick={() => send(input)} title="Отправить">
+                onClick={() => sendFromUser(input)} title="Отправить">
                 <IconSend size={16} />
               </IconButton>
             </div>
