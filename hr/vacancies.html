@@ -15,7 +15,7 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Card, Tag, Input, Button, Checkbox, Tabs, Switch, Snackbar } = window.SkillazCoreDesignSystem_bf9566;
+const { Card, Tag, Input, Button, Checkbox, Tabs, Snackbar } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
 const { IconSearch, IconMapPin, IconBriefcase, IconX, IconFilter, IconSparklesSolid, IconSettings } = Icons;
 const D = window.SITE_DATA;
@@ -88,22 +88,26 @@ function filtersSignature(filters) {
   return JSON.stringify(Object.keys(FILTER_LABELS).map((k) => [...filters[k]].sort()));
 }
 
-// Подписка на уведомления по текущим фильтрам: компактная пилюля с тоглом (в духе job
-// alert на hh.ru/LinkedIn), сидит в одном ряду с "Найдено вакансий" справа. Тогл сохраняет
+// Подписка на уведомления по текущим фильтрам: компактная пилюля-кнопка (в духе job
+// alert на hh.ru/LinkedIn), сидит в одном ряду с "Найдено вакансий" справа. Клик сохраняет
 // снимок filters как отдельную подписку — если подписок несколько, они показаны бирками
-// ниже, каждую можно снять по отдельности.
+// ниже, каждую можно снять по отдельности. Без тогла — сам клик по пилюле переключает
+// подписку, второй клик снимает её же (см. правки по референсу из ДС).
 function SubscribeBar({ filters, hasActiveFilters, subscriptions, onSubscribe, onUnsubscribe }) {
   const sig = filtersSignature(filters);
   const isOn = hasActiveFilters && subscriptions.some((s) => s.sig === sig);
   return (
-    <div className="sk-row sk-gap-2" style={{
-      alignItems: "center", flexShrink: 0, padding: "6px 6px 6px 12px", borderRadius: "var(--sk-radius-full)",
-      background: "var(--sk-surface-tertiary)", opacity: hasActiveFilters ? 1 : 0.6,
-    }} title={hasActiveFilters ? undefined : "Выберите фильтр, чтобы подписаться на уведомления"}>
-      <IconBell size={16} color="var(--sk-icon-primary)" />
-      <div className="sk-label-4-regular" style={{ whiteSpace: "nowrap", color: "var(--sk-text-primary)" }}>Подписаться на уведомления</div>
-      <Switch checked={isOn} disabled={!hasActiveFilters} onChange={(v) => (v ? onSubscribe(sig, filters) : onUnsubscribe(sig))} />
-    </div>
+    <button type="button" disabled={!hasActiveFilters}
+      onClick={() => (isOn ? onUnsubscribe(sig) : onSubscribe(sig, filters))}
+      className="sk-row sk-gap-2 sk-clickable" style={{
+        alignItems: "center", flexShrink: 0, height: 36, padding: "0 14px", border: "none",
+        borderRadius: "var(--sk-radius-full)", background: "var(--sk-surface-tertiary)",
+        color: "var(--sk-text-secondary)", font: "var(--sk-label-4-regular)",
+        cursor: hasActiveFilters ? "pointer" : "default", opacity: hasActiveFilters ? 1 : 0.6, whiteSpace: "nowrap",
+      }} title={hasActiveFilters ? undefined : "Выберите фильтр, чтобы подписаться на уведомления"}>
+      <IconBell size={16} color={isOn ? "var(--sk-icon-accent)" : "var(--sk-icon-secondary)"} />
+      {isOn ? "Вы подписаны" : "Подписаться на новые"}
+    </button>
   );
 }
 

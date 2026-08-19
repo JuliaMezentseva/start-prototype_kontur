@@ -2087,6 +2087,46 @@ window.SITE_DATA = {
       v.responsesCount = v.visibleToEmployees === false ? 0 : (v.status === "closed" ? base + 4 : base);
     }
   });
+  // Отклики: вручную с текстом сопроводительного письма расписаны только у v1, v2, v9 —
+  // у остальных вакансий responsesCount есть, а самих откликов нет. Страница "Отклики"
+  // (hr/vacancy-responses.html) должна открываться из любой строки таблицы, поэтому здесь
+  // детерминированно (по id + порядковому номеру) досоздаём отклики того же количества.
+  var RESPONSE_NAME_POOL = [
+    { lastName: "Кузнецова", firstName: "Анна", patronymic: "Олеговна", position: "Специалист поддержки клиентов", department: "Контактный центр", city: "Москва" },
+    { lastName: "Соловьёв", firstName: "Дмитрий", patronymic: "Андреевич", position: "Менеджер по продажам", department: "Департамент продаж", city: "Москва" },
+    { lastName: "Егорова", firstName: "Мария", patronymic: "Сергеевна", position: "Продуктовый аналитик", department: "Трайб «Данные и аналитика»", city: "Москва" },
+    { lastName: "Никитин", firstName: "Павел", patronymic: "Игоревич", position: "HR-партнёр", department: "Дирекция по персоналу", city: "Санкт-Петербург" },
+    { lastName: "Громова", firstName: "Елена", patronymic: "Викторовна", position: "Бухгалтер", department: "Департамент финансов", city: "Москва" },
+    { lastName: "Волков", firstName: "Сергей", patronymic: "Николаевич", position: "Инженер по качеству", department: "Производственный департамент", city: "Казань" },
+    { lastName: "Морозова", firstName: "Ирина", patronymic: "Дмитриевна", position: "Логист-координатор поставок", department: "Департамент логистики", city: "Москва" },
+    { lastName: "Захаров", firstName: "Артём", patronymic: "Викторович", position: "Специалист по кадровому администрированию", department: "Дирекция по персоналу", city: "Москва" },
+  ];
+  var RESPONSE_LETTERS = [
+    "Хочу попробовать себя в новой роли внутри компании — думаю, мой опыт хорошо подойдёт.",
+    "Давно слежу за этим направлением и хочу перейти туда на постоянной основе.",
+    "Интересно расширить зону ответственности и попробовать новые задачи.",
+    "Коллеги посоветовали откликнуться — уверен(а), что смогу быть полезен(на) команде.",
+  ];
+  var RESPONSE_DATES = ["14.03.26", "10.03.26", "07.03.26", "02.03.26", "26.02.26"];
+  window.SITE_DATA.vacancies.forEach((v) => {
+    if (v.responses || !v.responsesCount) return;
+    v.responses = [];
+    for (let i = 0; i < v.responsesCount; i++) {
+      const seed = seedFromId(v.id + "_" + i);
+      const person = RESPONSE_NAME_POOL[seed % RESPONSE_NAME_POOL.length];
+      const years = 1 + (seed % 4);
+      const months = (seed >> 3) % 12;
+      v.responses.push({
+        lastName: person.lastName, firstName: person.firstName, patronymic: person.patronymic,
+        position: person.position, department: person.department, city: person.city,
+        tenure: months ? years + " год" + (years === 1 ? "" : "а") + " " + months + " мес." : years + " год" + (years === 1 ? "" : "а"),
+        phone: "+7 916 " + (100 + (seed % 800)) + " " + (1000 + ((seed >> 5) % 9000)),
+        email: "candidate" + (i + 1) + "." + v.id + "@kontur.ru",
+        letter: RESPONSE_LETTERS[seed % RESPONSE_LETTERS.length],
+        date: RESPONSE_DATES[(seed >> 2) % RESPONSE_DATES.length],
+      });
+    }
+  });
   // Вакансия, созданная HR вручную и ещё не опубликованная — демонстрирует сценарий
   // "HR-админ может скрыть/показать вакансию" из Проектного решения (внутренний найм).
   window.SITE_DATA.vacancies.push({

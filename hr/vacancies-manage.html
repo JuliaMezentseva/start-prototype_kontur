@@ -17,7 +17,7 @@
 <script type="text/babel">
 const { Card, Tag, Table, Switch, Input, Select, Textarea, Button, Tooltip, Modal, Snackbar, Alert } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
-const { IconPlusSm, IconUpload, IconSearch, IconEdit, IconFileText, IconArrowLeft } = Icons;
+const { IconPlusSm, IconUpload, IconSearch, IconEdit, IconFileText, IconArrowLeft, IconChevronRight } = Icons;
 
 const D = window.SITE_DATA;
 
@@ -282,7 +282,10 @@ function Page() {
     ) },
     { key: "responses", title: <SortableHeader label="Отклики" sortKey="responses" />, render: (v) => (
       v.responsesCount > 0 ? (
-        <a href="#" onClick={(e) => e.preventDefault()} style={{ color: "var(--sk-text-accent)", font: "var(--sk-label-3)" }}>{v.responsesCount}</a>
+        <a href={"vacancy-responses.html?id=" + v.id} onClick={(e) => e.stopPropagation()} className="sk-row sk-gap-1"
+          style={{ alignItems: "center", color: "var(--sk-text-accent)", font: "var(--sk-label-3)", textDecoration: "none" }}>
+          {v.responsesCount}<IconChevronRight size={14} />
+        </a>
       ) : (
         <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>0</span>
       )

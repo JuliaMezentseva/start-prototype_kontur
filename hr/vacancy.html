@@ -120,6 +120,11 @@ function Page() {
             {!closed && <span className="sk-row sk-gap-1"><IconClock size={15} />{vacancy.postedDate}</span>}
           </div>
         </div>
+        {vacancy.responsesCount > 0 && (
+          <a href={"vacancy-responses.html?id=" + vacancy.id} style={{ textDecoration: "none", flexShrink: 0 }}>
+            <Button mode="secondary" postfix={<IconChevronRight size={16} />}>Отклики · {vacancy.responsesCount}</Button>
+          </a>
+        )}
       </div>
 
       <div className="sk-row" style={{ alignItems: "flex-start", gap: 24 }}>
