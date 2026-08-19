@@ -15,7 +15,7 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Card, Avatar, Divider, Button, Modal, Input, Table } = window.SkillazCoreDesignSystem_bf9566;
+const { Card, Avatar, Divider, Button, Modal, Input, Table, SegmentedControl, Tag } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
 const { IconArrowLeft, IconMapPin, IconBriefcase, IconPhone, IconMail, IconSearch, IconFileText } = Icons;
 const D = window.SITE_DATA;
@@ -81,6 +81,48 @@ function ResumeCard({ r }) {
   );
 }
 
+// Карточка отклика — альтернатива табличному виду: то же самое одно нажатие открывает
+// ту же ResponseDetailModal, но здесь сразу видно начало сопроводительного письма —
+// удобнее, когда откликов немного и хочется быстро пробежать глазами по мотивации,
+// а не сравнивать сухие поля по колонкам (для этого лучше подходит таблица).
+function ResponseCard({ r, onOpen }) {
+  const [hovered, setHovered] = React.useState(false);
+  const fio = r.lastName + " " + r.firstName + " " + r.patronymic;
+  return (
+    <Card bordered onClick={onOpen} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} style={{
+      cursor: "pointer", height: "100%",
+      boxShadow: hovered ? "inset 0 0 0 1.5px var(--sk-stroke-accent)" : "inset 0 0 0 1px var(--sk-stroke)",
+    }}>
+      <div className="sk-col sk-gap-3" style={{ height: "100%" }}>
+        <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
+          <Avatar name={fio} size={36} />
+          <div className="sk-col" style={{ gap: 0, minWidth: 0 }}>
+            <div className="sk-label-3" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{fio}</div>
+            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.position}</div>
+          </div>
+        </div>
+
+        <div className="sk-row sk-gap-2 sk-muted" style={{ font: "var(--sk-label-4-regular)", flexWrap: "wrap" }}>
+          <span className="sk-row sk-gap-1"><IconMapPin size={13} />{r.city}</span>
+          <span className="sk-row sk-gap-1"><IconBriefcase size={13} />{r.department}</span>
+        </div>
+
+        <div className="sk-label-4-regular" style={{
+          flex: 1, color: "var(--sk-text-secondary)",
+          display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden",
+        }}>
+          {r.letter || "Кандидат не оставил сопроводительное письмо."}
+        </div>
+
+        <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+          <Tag size="s" hue="gray">{r.tenure}</Tag>
+          <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{r.date}</span>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 function ResponseDetailModal({ r, onClose }) {
   const fio = r.lastName + " " + r.firstName + " " + r.patronymic;
   return (
@@ -132,6 +174,11 @@ function Page() {
   const responses = vacancy.responses || [];
   const [q, setQ] = React.useState("");
   const [openIndex, setOpenIndex] = React.useState(null);
+  // Таблица — вид по умолчанию: та же логика, что и в остальных HR-разделах (Планы
+  // сотрудников, Управление вакансиями) — плотное сравнение полей по колонкам, привычнее
+  // для перебора большого числа откликов. Карточки — альтернатива, когда откликов немного
+  // и важнее сразу видеть начало сопроводительного письма.
+  const [view, setView] = React.useState("table"); // "table" | "cards"
 
   const needle = q.trim().toLowerCase();
   const filtered = React.useMemo(() => {
@@ -170,8 +217,12 @@ function Page() {
         </div>
       </div>
 
-      <Input size="s" icon={<IconSearch size={20} />} placeholder="Поиск по имени или должности"
-        value={q} onChange={(e) => setQ(e.target.value || "")} style={{ maxWidth: 360 }} />
+      <div className="sk-row sk-gap-2" style={{ alignItems: "center", flexWrap: "wrap" }}>
+        <Input size="s" icon={<IconSearch size={20} />} placeholder="Поиск по имени или должности"
+          value={q} onChange={(e) => setQ(e.target.value || "")} style={{ maxWidth: 360, flex: 1 }} />
+        <SegmentedControl size="s" active={view} onChange={setView}
+          items={[{ id: "table", label: "Таблица" }, { id: "cards", label: "Карточки" }]} />
+      </div>
 
       <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Найдено откликов: {filtered.length}</div>
 
@@ -179,10 +230,16 @@ function Page() {
         <Card><div className="sk-muted" style={{ textAlign: "center", padding: "24px 0" }}>
           {responses.length === 0 ? "Пока нет откликов на эту вакансию." : "Ничего не нашлось по заданным условиям."}
         </div></Card>
-      ) : (
+      ) : view === "table" ? (
         <div className="sk-scroll" style={{ overflowX: "auto" }}>
           <Table columns={columns} rows={filtered.map((r, i) => ({ ...r, id: i }))}
             onRowClick={(r) => setOpenIndex(r.id)} />
+        </div>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+          {filtered.map((r, i) => (
+            <ResponseCard key={i} r={r} onOpen={() => setOpenIndex(i)} />
+          ))}
         </div>
       )}
 
