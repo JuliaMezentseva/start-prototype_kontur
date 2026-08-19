@@ -33,7 +33,7 @@ function loadPage(htmlPath, query) {
   }
   return window;
 }
-const target = path.resolve("/home/claude/proto/hr/vacancies.html");
+const target = path.resolve("/home/claude/proto/hr/vacancies-manage.html");
 const w = loadPage(target);
 setTimeout(() => {
   const exportBtn = [...w.document.querySelectorAll("button")].find(b => b.textContent.includes("Выгрузить отклики"));

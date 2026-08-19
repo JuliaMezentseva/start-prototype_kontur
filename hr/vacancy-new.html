@@ -156,12 +156,12 @@ function Page() {
   function publish() {
     setConfirmOpen(false);
     showToast("Вакансия опубликована");
-    window.setTimeout(() => { window.location.href = "vacancies.html"; }, 900);
+    window.setTimeout(() => { window.location.href = "vacancies-manage.html"; }, 900);
   }
 
   return (
     <AppShell role="hr" active="vacancies" base=".."
-      breadcrumb={<a href="vacancies.html" className="sk-row sk-gap-1" style={{ color: "var(--sk-text-secondary)" }}><IconArrowLeft size={14} /> Управление вакансиями</a>}>
+      breadcrumb={<a href="vacancies-manage.html" className="sk-row sk-gap-1" style={{ color: "var(--sk-text-secondary)" }}><IconArrowLeft size={14} /> Управление вакансиями</a>}>
       <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
         <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
           <div className="sk-title-4">Новая вакансия</div>

@@ -20,9 +20,9 @@ const { AppShell, Icons } = window.Site;
 const { IconSearch, IconMapPin, IconBriefcase, IconX, IconFilter, IconSparklesSolid } = Icons;
 const D = window.SITE_DATA;
 
-// Переключатель "Витрина / Мои отклики" — это переход между двумя разными HTML-страницами
-// (как VacanciesModeTabs у HR в hr/vacancies.html), поэтому onChange просто меняет location,
-// а не переключает состояние на одной странице.
+// Переключатель "Вакансии / Мои отклики" — это переход между двумя разными HTML-страницами
+// (та же связка используется в HR-версии витрины, hr/vacancies.html), поэтому onChange
+// просто меняет location, а не переключает состояние на одной странице.
 function EmployeeVacanciesTabs({ active, responsesCount }) {
   function go(id) {
     if (id === active) return;

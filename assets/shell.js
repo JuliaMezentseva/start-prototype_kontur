@@ -582,6 +582,13 @@ function aiVacancyMatchReasons(v, person) {
 }
 
 // ---------------- Разбор запросов: Сотрудник / витрина вакансий ----------------
+// Витрина вакансий рендерится с двух разных путей (employee/vacancies.html и
+// hr/vacancies.html — у HR она выглядит так же, как у Сотрудника), а карточка
+// вакансии живёт только в employee/ — отсюда относительный путь зависит от того,
+// с какой страницы сейчас построена ссылка.
+function aiVacancyPath() {
+  return /\/hr\//.test(window.location.pathname) ? "../employee/vacancy.html" : "vacancy.html";
+}
 function aiEmployeeVacanciesMatchIntent() {
   const D = window.SITE_DATA;
   const pool = D.vacancies.filter((v) => v.visibleToEmployees !== false && v.status === "open");
@@ -590,7 +597,7 @@ function aiEmployeeVacanciesMatchIntent() {
     id: v.id, title: v.title, subtitle: v.city + " · " + v.department,
     reasons: aiVacancyMatchReasons(v, D.person).concat([aiVacancySalaryLine(v)]), matchPct: pct,
     actions: [
-      { kind: "link", label: "Открыть", href: "vacancy.html?id=" + v.id },
+      { kind: "link", label: "Открыть", href: aiVacancyPath() + "?id=" + v.id },
       { kind: "apply", label: "Откликнуться", vacancyId: v.id },
     ],
   }));
@@ -644,7 +651,7 @@ function aiEmployeeVacanciesIntent(queryRaw) {
   }
   const results = matched.map((v) => ({
     id: v.id, title: v.title, subtitle: v.city + " · " + v.department,
-    reasons: [aiVacancySalaryLine(v)], href: "vacancy.html?id=" + v.id, openLabel: "Открыть вакансию",
+    reasons: [aiVacancySalaryLine(v)], href: aiVacancyPath() + "?id=" + v.id, openLabel: "Открыть вакансию",
   }));
   return {
     text: results.length
@@ -852,6 +859,7 @@ function aiPageKey() {
   if (/\/manager\/team\.html$/.test(p)) return "manager-team";
   if (/\/manager\/plan\.html$/.test(p)) return "manager-plan";
   if (/\/employee\/vacancies\.html$/.test(p)) return "employee-vacancies";
+  if (/\/hr\/vacancies\.html$/.test(p)) return "employee-vacancies";
   if (/\/employee\/vacancy\.html$/.test(p)) return "employee-vacancy";
   if (/\/employee\/plan\.html$/.test(p)) return "employee-plan";
   return null;
@@ -1096,7 +1104,7 @@ function AiAssistantWidget({ role }) {
       }
       if (reply.action === "navigateApply") {
         window.setTimeout(function () {
-          window.location.href = "vacancy.html?id=" + reply.actionPayload + "&aiApply=1";
+          window.location.href = aiVacancyPath() + "?id=" + reply.actionPayload + "&aiApply=1";
         }, 500);
       }
       if (reply.action === "openSubgoal") {

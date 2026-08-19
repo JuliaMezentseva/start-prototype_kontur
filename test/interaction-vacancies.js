@@ -30,7 +30,7 @@ function loadPage(htmlPath, query) {
   }
   return window;
 }
-const target = path.resolve("/home/claude/proto/hr/vacancies.html");
+const target = path.resolve("/home/claude/proto/hr/vacancies-manage.html");
 const w = loadPage(target);
 setTimeout(() => {
   const buttons = [...w.document.querySelectorAll("button")];
