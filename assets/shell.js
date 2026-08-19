@@ -878,6 +878,7 @@ function aiPageKey() {
   if (/\/employee\/vacancies\.html$/.test(p)) return "employee-vacancies";
   if (/\/hr\/vacancies\.html$/.test(p)) return "employee-vacancies";
   if (/\/employee\/vacancy\.html$/.test(p)) return "employee-vacancy";
+  if (/\/hr\/vacancy\.html$/.test(p)) return "employee-vacancy";
   if (/\/employee\/plan\.html$/.test(p)) return "employee-plan";
   return null;
 }
