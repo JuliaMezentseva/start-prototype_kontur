@@ -15,9 +15,9 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Card, Tag, Divider, Avatar, Input, Select, Textarea, Button, Switch, Snackbar } = window.SkillazCoreDesignSystem_bf9566;
+const { Card, Tag, Avatar, Input, Select, Textarea, Button, Switch, Snackbar } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
-const { IconArrowLeft, IconChevronDown } = Icons;
+const { IconArrowLeft, IconChevronDown, IconCheck } = Icons;
 const D = window.SITE_DATA;
 
 const SECTIONS = [
@@ -141,6 +141,15 @@ function Page() {
   const valid = form.title.trim() && form.department.trim() && form.responsibilities.trim()
     && form.requirements.trim() && form.salaryFrom && form.salaryTo;
 
+  // Отмечает разделы навигации галочкой, когда все обязательные поля внутри заполнены —
+  // так справа видно не просто "где я сейчас", а что ещё осталось дозаполнить до публикации.
+  const sectionComplete = {
+    basic: !!(form.title.trim() && form.department.trim()),
+    description: !!(form.responsibilities.trim() && form.requirements.trim()),
+    params: !!(form.salaryFrom && form.salaryTo),
+    publish: true,
+  };
+
   function showToast(msg) { setToast(msg); window.setTimeout(() => setToast(null), 2400); }
   function saveDraft() { showToast("Черновик сохранён"); }
   function publish() {
@@ -162,91 +171,106 @@ function Page() {
         </div>
       </div>
 
-      <div className="sk-row" style={{ alignItems: "flex-start", gap: 32 }}>
-        <div className="sk-col sk-gap-6" style={{ flex: 1, minWidth: 0, maxWidth: 720 }}>
+      <div className="sk-row" style={{ alignItems: "flex-start", gap: 24 }}>
+        <div className="sk-col sk-gap-5" style={{ flex: 1, minWidth: 0, maxWidth: 720 }}>
 
-          <div ref={sectionRefs.basic} data-section="basic" className="sk-col sk-gap-3">
-            <div className="sk-label-2">Основное</div>
-            <Input label="Название вакансии" required placeholder="Например, Senior Frontend-разработчик"
-              value={form.title} onChange={(e) => set("title")(e.target.value || "")} />
-            <div className="sk-row sk-gap-3">
-              <Select label="Направление" value={form.direction} options={D.directions.map((d) => ({ value: d, label: d }))}
-                onChange={set("direction")} style={{ flex: 1 }} />
-              <Input label="Подразделение" required value={form.department} onChange={(e) => set("department")(e.target.value || "")} style={{ flex: 1 }} />
-            </div>
-            <div className="sk-col sk-gap-2">
-              <div className="sk-label-3">Ключевые навыки</div>
-              <SkillTagInput value={form.skills} onChange={set("skills")} />
-              <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Показываются тегами в карточке вакансии</div>
-            </div>
-          </div>
-
-          <Divider />
-
-          <div ref={sectionRefs.description} data-section="description" className="sk-col sk-gap-3">
-            <div className="sk-label-2">Описание</div>
-            <Textarea label="Обязанности" required helper="Каждый пункт — с новой строки" rows={4}
-              value={form.responsibilities} onChange={(e) => set("responsibilities")(e.target.value || "")} />
-            <Textarea label="Требования и навыки" required helper="Каждый пункт — с новой строки" rows={4}
-              value={form.requirements} onChange={(e) => set("requirements")(e.target.value || "")} />
-            <Textarea label="Условия" helper="Каждый пункт — с новой строки" rows={3}
-              value={form.conditions} onChange={(e) => set("conditions")(e.target.value || "")} />
-          </div>
-
-          <Divider />
-
-          <div ref={sectionRefs.params} data-section="params" className="sk-col sk-gap-3">
-            <div className="sk-label-2">Параметры</div>
-            <div className="sk-row sk-gap-3">
-              <Select label="Город" value={form.city} options={D.cities.map((c) => ({ value: c, label: c }))} onChange={set("city")} style={{ flex: 1 }} />
-              <Select label="Формат работы" value={form.format} options={D.workFormats.map((f) => ({ value: f, label: f }))} onChange={set("format")} style={{ flex: 1 }} />
-              <Select label="Тип занятости" value={form.employment} options={D.employmentTypes.map((e) => ({ value: e, label: e }))} onChange={set("employment")} style={{ flex: 1 }} />
-            </div>
-            <div className="sk-row sk-gap-3">
-              <Input label="Грейд" placeholder="Junior / Middle / Senior" value={form.grade} onChange={(e) => set("grade")(e.target.value || "")} style={{ flex: 1 }} />
-              <Select label="Опыт" value={form.experience} options={D.experienceOptions.map((e) => ({ value: e, label: e }))} onChange={set("experience")} style={{ flex: 1 }} />
-              <Input label="Оклад от" required type="number" value={form.salaryFrom} onChange={(e) => set("salaryFrom")(e.target.value)} style={{ flex: 1 }} />
-              <Input label="Оклад до" required type="number" value={form.salaryTo} onChange={(e) => set("salaryTo")(e.target.value)} style={{ flex: 1 }} />
-            </div>
-            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>на руки, до вычета налогов</div>
-          </div>
-
-          <Divider />
-
-          <div ref={sectionRefs.publish} data-section="publish" className="sk-col sk-gap-4">
-            <div className="sk-label-2">Публикация и команда</div>
-            <div className="sk-row sk-gap-3" style={{ alignItems: "center" }}>
-              <Switch checked={form.visibleToEmployees} onChange={set("visibleToEmployees")} />
-              <div className="sk-col" style={{ gap: 0 }}>
-                <div className="sk-label-3-regular">Видна сотрудникам</div>
-                <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Появится на витрине сразу после публикации</div>
+          <Card bordered>
+            <div ref={sectionRefs.basic} data-section="basic" className="sk-col sk-gap-3">
+              <div className="sk-label-2">Основное</div>
+              <Input label="Название вакансии" required placeholder="Например, Senior Frontend-разработчик"
+                value={form.title} onChange={(e) => set("title")(e.target.value || "")} />
+              <div className="sk-row sk-gap-3">
+                <Select label="Направление" value={form.direction} options={D.directions.map((d) => ({ value: d, label: d }))}
+                  onChange={set("direction")} style={{ flex: 1 }} />
+                <Input label="Подразделение" required value={form.department} onChange={(e) => set("department")(e.target.value || "")} style={{ flex: 1 }} />
+              </div>
+              <div className="sk-col sk-gap-2">
+                <div className="sk-label-3">Ключевые навыки</div>
+                <SkillTagInput value={form.skills} onChange={set("skills")} />
+                <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Показываются тегами в карточке вакансии</div>
               </div>
             </div>
-            <div className="sk-col sk-gap-2">
-              <div className="sk-label-3">Контакт для связи</div>
-              <RecruiterPicker value={form.recruiter} options={recruiterOptions} onChange={set("recruiter")} />
+          </Card>
+
+          <Card bordered>
+            <div ref={sectionRefs.description} data-section="description" className="sk-col sk-gap-3">
+              <div className="sk-label-2">Описание</div>
+              <Textarea label="Обязанности" required helper="Каждый пункт — с новой строки" rows={6}
+                value={form.responsibilities} onChange={(e) => set("responsibilities")(e.target.value || "")} />
+              <Textarea label="Требования и навыки" required helper="Каждый пункт — с новой строки" rows={6}
+                value={form.requirements} onChange={(e) => set("requirements")(e.target.value || "")} />
+              <Textarea label="Условия" helper="Каждый пункт — с новой строки" rows={4}
+                value={form.conditions} onChange={(e) => set("conditions")(e.target.value || "")} />
             </div>
-          </div>
+          </Card>
+
+          <Card bordered>
+            <div ref={sectionRefs.params} data-section="params" className="sk-col sk-gap-3">
+              <div className="sk-label-2">Параметры</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+                <Select label="Город" value={form.city} options={D.cities.map((c) => ({ value: c, label: c }))} onChange={set("city")} />
+                <Select label="Формат работы" value={form.format} options={D.workFormats.map((f) => ({ value: f, label: f }))} onChange={set("format")} />
+                <Select label="Тип занятости" value={form.employment} options={D.employmentTypes.map((e) => ({ value: e, label: e }))} onChange={set("employment")} />
+                <Input label="Грейд" placeholder="Junior / Middle / Senior" value={form.grade} onChange={(e) => set("grade")(e.target.value || "")} />
+                <Select label="Опыт" value={form.experience} options={D.experienceOptions.map((e) => ({ value: e, label: e }))} onChange={set("experience")} />
+                <Input label="Оклад от" required type="number" value={form.salaryFrom} onChange={(e) => set("salaryFrom")(e.target.value)} />
+                <Input label="Оклад до" required type="number" value={form.salaryTo} onChange={(e) => set("salaryTo")(e.target.value)} />
+              </div>
+              <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>на руки, до вычета налогов</div>
+            </div>
+          </Card>
+
+          <Card bordered>
+            <div ref={sectionRefs.publish} data-section="publish" className="sk-col sk-gap-4">
+              <div className="sk-label-2">Публикация и команда</div>
+              <div className="sk-row sk-gap-3" style={{ alignItems: "center" }}>
+                <Switch checked={form.visibleToEmployees} onChange={set("visibleToEmployees")} />
+                <div className="sk-col" style={{ gap: 0 }}>
+                  <div className="sk-label-3-regular">Видна сотрудникам</div>
+                  <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Появится на витрине сразу после публикации</div>
+                </div>
+              </div>
+              <div className="sk-col sk-gap-2">
+                <div className="sk-label-3">Контакт для связи</div>
+                <RecruiterPicker value={form.recruiter} options={recruiterOptions} onChange={set("recruiter")} />
+              </div>
+            </div>
+          </Card>
 
         </div>
 
-        <div style={{ width: 220, flexShrink: 0, position: "sticky", top: 24 }}>
-          <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 12 }}>
-            На этой странице
+        <Card bordered style={{ width: 240, flexShrink: 0, padding: 20, position: "sticky", top: 24 }}>
+          <div className="sk-col sk-gap-4">
+            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+              На этой странице
+            </div>
+            <div className="sk-col sk-gap-1">
+              {SECTIONS.map((s) => (
+                <button key={s.key} type="button" onClick={() => scrollToSection(s.key)} className="sk-row sk-gap-2 sk-clickable" style={{
+                  textAlign: "left", padding: "7px 0", border: "none", background: "none", cursor: "pointer", alignItems: "center",
+                  font: activeSection === s.key ? "var(--sk-label-3)" : "var(--sk-label-3-regular)",
+                  color: activeSection === s.key ? "var(--sk-text-accent)" : "var(--sk-text-secondary)",
+                }}>
+                  {sectionComplete[s.key] ? (
+                    <span style={{
+                      display: "inline-flex", alignItems: "center", justifyContent: "center", width: 16, height: 16, borderRadius: "50%",
+                      background: "var(--sk-positive-secondary)", color: "var(--sk-text-positive)", flexShrink: 0,
+                    }}>
+                      <IconCheck size={11} />
+                    </span>
+                  ) : (
+                    <span style={{
+                      display: "inline-block", width: 16, height: 16, borderRadius: "50%",
+                      border: "1.5px solid var(--sk-stroke)", flexShrink: 0, boxSizing: "border-box",
+                    }} />
+                  )}
+                  {s.label}
+                </button>
+              ))}
+            </div>
+            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Черновик сохраняется автоматически</div>
           </div>
-          <div className="sk-col sk-gap-1">
-            {SECTIONS.map((s) => (
-              <button key={s.key} type="button" onClick={() => scrollToSection(s.key)} className="sk-clickable" style={{
-                textAlign: "left", padding: "6px 0", border: "none", background: "none", cursor: "pointer",
-                font: activeSection === s.key ? "var(--sk-label-3)" : "var(--sk-label-3-regular)",
-                color: activeSection === s.key ? "var(--sk-text-accent)" : "var(--sk-text-secondary)",
-              }}>
-                {s.label}
-              </button>
-            ))}
-          </div>
-          <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", marginTop: 16 }}>Черновик сохраняется автоматически</div>
-        </div>
+        </Card>
       </div>
 
       {toast && (
