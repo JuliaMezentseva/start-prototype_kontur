@@ -1992,6 +1992,7 @@ function Input({
   type = "text",
   style,
   inputStyle,
+  filled = false,
   ...rest
 }) {
   const [focus, setFocus] = React.useState(false);
@@ -2021,8 +2022,8 @@ function Input({
       height: h,
       padding: "0 12px",
       borderRadius: "var(--sk-radius-form)",
-      background: disabled ? "var(--sk-surface-disabled)" : "var(--sk-surface-page)",
-      boxShadow: `inset 0 0 0 ${focus && !error ? 2 : 1}px ${stroke}`,
+      background: disabled ? "var(--sk-surface-disabled)" : filled ? "var(--sk-surface-secondary)" : "var(--sk-surface-page)",
+      boxShadow: filled ? (focus && !error ? `inset 0 0 0 2px ${stroke}` : "none") : `inset 0 0 0 ${focus && !error ? 2 : 1}px ${stroke}`,
       transition: "box-shadow var(--sk-duration) var(--sk-ease)"
     }
   }, icon && /*#__PURE__*/React.createElement("span", {
@@ -2271,7 +2272,8 @@ function Select({
   // m=40 | l=48
   disabled = false,
   searchable = false,
-  style
+  style,
+  filled = false
 }) {
   const [open, setOpen] = React.useState(false);
   const [internal, setInternal] = React.useState(defaultValue ?? (multiple ? [] : null));
@@ -2337,8 +2339,8 @@ function Select({
       width: "100%",
       borderRadius: "var(--sk-radius-form)",
       border: "none",
-      background: disabled ? "var(--sk-surface-disabled)" : "var(--sk-surface-page)",
-      boxShadow: `inset 0 0 0 ${open && !error ? 2 : 1}px ${stroke}`,
+      background: disabled ? "var(--sk-surface-disabled)" : filled ? "var(--sk-surface-secondary)" : "var(--sk-surface-page)",
+      boxShadow: filled ? (open && !error ? `inset 0 0 0 2px ${stroke}` : "none") : `inset 0 0 0 ${open && !error ? 2 : 1}px ${stroke}`,
       font: "400 14px/20px var(--sk-font-ui)",
       letterSpacing: "0.005em",
       color: displayText ? "var(--sk-text-primary)" : "var(--sk-text-placeholder)",
@@ -2554,7 +2556,8 @@ function Textarea({
   resize = "vertical",
   // vertical | none
   style,
-  textareaStyle
+  textareaStyle,
+  filled = false
 }) {
   const [focus, setFocus] = React.useState(false);
   const [internal, setInternal] = React.useState(defaultValue || "");
@@ -2581,8 +2584,8 @@ function Textarea({
     style: {
       display: "block",
       borderRadius: "var(--sk-radius-form)",
-      background: disabled ? "var(--sk-surface-disabled)" : "var(--sk-surface-page)",
-      boxShadow: `inset 0 0 0 ${focus && !error ? 2 : 1}px ${stroke}`,
+      background: disabled ? "var(--sk-surface-disabled)" : filled ? "var(--sk-surface-secondary)" : "var(--sk-surface-page)",
+      boxShadow: filled ? (focus && !error ? `inset 0 0 0 2px ${stroke}` : "none") : `inset 0 0 0 ${focus && !error ? 2 : 1}px ${stroke}`,
       padding: 12,
       transition: "box-shadow var(--sk-duration) var(--sk-ease)"
     }

@@ -40,7 +40,7 @@ function SkillTagInput({ value, onChange }) {
   return (
     <div className="sk-row sk-gap-2" style={{
       flexWrap: "wrap", alignItems: "center", minHeight: 48, padding: "8px 10px",
-      boxShadow: "inset 0 0 0 1px var(--sk-stroke)", borderRadius: "var(--sk-radius-form)", background: "var(--sk-surface-page)",
+      borderRadius: "var(--sk-radius-form)", background: "var(--sk-surface-secondary)",
     }}>
       {value.map((s) => (
         <Tag key={s} size="s" pill onRemove={() => onChange(value.filter((x) => x !== s))}>{s}</Tag>
@@ -71,8 +71,8 @@ function RecruiterPicker({ value, options, onChange }) {
     <div ref={ref} style={{ position: "relative" }}>
       <button type="button" onClick={() => setOpen((o) => !o)} className="sk-row sk-gap-3 sk-clickable" style={{
         alignItems: "center", width: "100%", padding: "10px 12px", cursor: "pointer",
-        boxShadow: `inset 0 0 0 1px ${open ? "var(--sk-stroke-accent)" : "var(--sk-stroke)"}`,
-        borderRadius: "var(--sk-radius-form)", background: "var(--sk-surface-page)", border: "none",
+        boxShadow: open ? "inset 0 0 0 2px var(--sk-stroke-accent)" : "none",
+        borderRadius: "var(--sk-radius-form)", background: "var(--sk-surface-secondary)", border: "none",
       }}>
         <Avatar name={value.name} size={36} />
         <div className="sk-col" style={{ flex: 1, gap: 0, textAlign: "left" }}>
@@ -176,12 +176,12 @@ function Page() {
 
           <div ref={sectionRefs.basic} data-section="basic" className="sk-col sk-gap-3">
             <div className="sk-label-2">Основное</div>
-            <Input label="Название вакансии" required placeholder="Например, Senior Frontend-разработчик"
+            <Input filled label="Название вакансии" required placeholder="Например, Senior Frontend-разработчик"
               value={form.title} onChange={(e) => set("title")(e.target.value || "")} />
             <div className="sk-row sk-gap-3">
-              <Select label="Направление" value={form.direction} options={D.directions.map((d) => ({ value: d, label: d }))}
+              <Select filled label="Направление" value={form.direction} options={D.directions.map((d) => ({ value: d, label: d }))}
                 onChange={set("direction")} style={{ flex: 1 }} />
-              <Input label="Подразделение" required value={form.department} onChange={(e) => set("department")(e.target.value || "")} style={{ flex: 1 }} />
+              <Input filled label="Подразделение" required value={form.department} onChange={(e) => set("department")(e.target.value || "")} style={{ flex: 1 }} />
             </div>
             <div className="sk-col sk-gap-2">
               <div className="sk-label-3">Ключевые навыки</div>
@@ -194,11 +194,11 @@ function Page() {
 
           <div ref={sectionRefs.description} data-section="description" className="sk-col sk-gap-3">
             <div className="sk-label-2">Описание</div>
-            <Textarea label="Обязанности" required helper="Каждый пункт — с новой строки" rows={6}
+            <Textarea filled label="Обязанности" required helper="Каждый пункт — с новой строки" rows={6}
               value={form.responsibilities} onChange={(e) => set("responsibilities")(e.target.value || "")} />
-            <Textarea label="Требования и навыки" required helper="Каждый пункт — с новой строки" rows={6}
+            <Textarea filled label="Требования и навыки" required helper="Каждый пункт — с новой строки" rows={6}
               value={form.requirements} onChange={(e) => set("requirements")(e.target.value || "")} />
-            <Textarea label="Условия" helper="Каждый пункт — с новой строки" rows={4}
+            <Textarea filled label="Условия" helper="Каждый пункт — с новой строки" rows={4}
               value={form.conditions} onChange={(e) => set("conditions")(e.target.value || "")} />
           </div>
 
@@ -207,13 +207,13 @@ function Page() {
           <div ref={sectionRefs.params} data-section="params" className="sk-col sk-gap-3">
             <div className="sk-label-2">Параметры</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
-              <Select label="Город" value={form.city} options={D.cities.map((c) => ({ value: c, label: c }))} onChange={set("city")} />
-              <Select label="Формат работы" value={form.format} options={D.workFormats.map((f) => ({ value: f, label: f }))} onChange={set("format")} />
-              <Select label="Тип занятости" value={form.employment} options={D.employmentTypes.map((e) => ({ value: e, label: e }))} onChange={set("employment")} />
-              <Input label="Грейд" placeholder="Junior / Middle / Senior" value={form.grade} onChange={(e) => set("grade")(e.target.value || "")} />
-              <Select label="Опыт" value={form.experience} options={D.experienceOptions.map((e) => ({ value: e, label: e }))} onChange={set("experience")} />
-              <Input label="Оклад от" required type="number" value={form.salaryFrom} onChange={(e) => set("salaryFrom")(e.target.value)} />
-              <Input label="Оклад до" required type="number" value={form.salaryTo} onChange={(e) => set("salaryTo")(e.target.value)} />
+              <Select filled label="Город" value={form.city} options={D.cities.map((c) => ({ value: c, label: c }))} onChange={set("city")} />
+              <Select filled label="Формат работы" value={form.format} options={D.workFormats.map((f) => ({ value: f, label: f }))} onChange={set("format")} />
+              <Select filled label="Тип занятости" value={form.employment} options={D.employmentTypes.map((e) => ({ value: e, label: e }))} onChange={set("employment")} />
+              <Input filled label="Грейд" placeholder="Junior / Middle / Senior" value={form.grade} onChange={(e) => set("grade")(e.target.value || "")} />
+              <Select filled label="Опыт" value={form.experience} options={D.experienceOptions.map((e) => ({ value: e, label: e }))} onChange={set("experience")} />
+              <Input filled label="Оклад от" required type="number" value={form.salaryFrom} onChange={(e) => set("salaryFrom")(e.target.value)} />
+              <Input filled label="Оклад до" required type="number" value={form.salaryTo} onChange={(e) => set("salaryTo")(e.target.value)} />
             </div>
             <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>на руки, до вычета налогов</div>
           </div>
