@@ -15,7 +15,7 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Card, Tag, Divider, Avatar, Input, Select, Textarea, Button, Switch, Snackbar } = window.SkillazCoreDesignSystem_bf9566;
+const { Card, Tag, Divider, Avatar, Input, Select, Textarea, Button, Modal, Snackbar } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
 const { IconArrowLeft, IconChevronDown, IconCheck } = Icons;
 const D = window.SITE_DATA;
@@ -24,7 +24,7 @@ const SECTIONS = [
   { key: "basic", label: "Основное" },
   { key: "description", label: "Описание" },
   { key: "params", label: "Параметры" },
-  { key: "publish", label: "Публикация и команда" },
+  { key: "publish", label: "Команда" },
 ];
 
 // Поле навыков — теги с крестиком-удалением (Tag.onRemove уже есть в ДС) плюс
@@ -116,10 +116,11 @@ function Page() {
     responsibilities: "", requirements: "", conditions: "",
     city: D.cities[0], format: D.workFormats[0], employment: D.employmentTypes[0],
     grade: "", experience: D.experienceOptions[0], salaryFrom: "", salaryTo: "",
-    visibleToEmployees: true, recruiter: recruiterOptions[0],
+    recruiter: recruiterOptions[0],
   });
   const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
   const [toast, setToast] = React.useState(null);
+  const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [activeSection, setActiveSection] = React.useState("basic");
   const sectionRefs = { basic: React.useRef(), description: React.useRef(), params: React.useRef(), publish: React.useRef() };
 
@@ -153,6 +154,7 @@ function Page() {
   function showToast(msg) { setToast(msg); window.setTimeout(() => setToast(null), 2400); }
   function saveDraft() { showToast("Черновик сохранён"); }
   function publish() {
+    setConfirmOpen(false);
     showToast("Вакансия опубликована");
     window.setTimeout(() => { window.location.href = "vacancies.html"; }, 900);
   }
@@ -167,7 +169,7 @@ function Page() {
         </div>
         <div className="sk-row sk-gap-2">
           <Button mode="secondary" onClick={saveDraft}>Сохранить черновик</Button>
-          <Button variant="accent" disabled={!valid} onClick={publish}>Опубликовать вакансию</Button>
+          <Button variant="accent" disabled={!valid} onClick={() => setConfirmOpen(true)}>Опубликовать вакансию</Button>
         </div>
       </div>
 
@@ -221,14 +223,7 @@ function Page() {
           <Divider />
 
           <div ref={sectionRefs.publish} data-section="publish" className="sk-col sk-gap-4">
-            <div className="sk-label-2">Публикация и команда</div>
-            <div className="sk-row sk-gap-3" style={{ alignItems: "center" }}>
-              <Switch checked={form.visibleToEmployees} onChange={set("visibleToEmployees")} />
-              <div className="sk-col" style={{ gap: 0 }}>
-                <div className="sk-label-3-regular">Видна сотрудникам</div>
-                <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Появится на витрине сразу после публикации</div>
-              </div>
-            </div>
+            <div className="sk-label-2">Команда</div>
             <div className="sk-col sk-gap-2">
               <div className="sk-label-3">Контакт для связи</div>
               <RecruiterPicker value={form.recruiter} options={recruiterOptions} onChange={set("recruiter")} />
@@ -270,6 +265,17 @@ function Page() {
           </div>
         </div>
       </div>
+
+      {confirmOpen && (
+        <Modal open title="Опубликовать вакансию?" onClose={() => setConfirmOpen(false)} size="s"
+          secondary={<Button mode="secondary" onClick={() => setConfirmOpen(false)}>Отмена</Button>}
+          primary={<Button variant="accent" onClick={publish}>Опубликовать</Button>}>
+          <div className="sk-col sk-gap-1">
+            <div>Вакансия сразу станет видна сотрудникам на витрине и будет доступна для откликов.</div>
+            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Отменить публикацию можно позже — вакансию можно скрыть от сотрудников в любой момент из списка управления вакансиями.</div>
+          </div>
+        </Modal>
+      )}
 
       {toast && (
         <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 100 }}>

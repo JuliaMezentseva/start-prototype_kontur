@@ -15,9 +15,9 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Card, Tag, TextList, Divider, Avatar, Button, Checkbox, Modal } = window.SkillazCoreDesignSystem_bf9566;
+const { Card, Tag, TextList, Divider, Avatar, Button, Modal } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
-const { IconArrowLeft, IconMapPin, IconMail, IconPhone, IconTarget, IconCheck, IconGift, IconLayers, IconClock, IconBriefcase, IconSparklesSolid } = Icons;
+const { IconArrowLeft, IconMapPin, IconMail, IconPhone, IconTarget, IconCheck, IconGift, IconLayers, IconClock, IconBriefcase, IconSparklesSolid, IconChevronRight } = Icons;
 const D = window.SITE_DATA;
 
 function fmtMoney(n) { return n.toLocaleString("ru-RU"); }
@@ -26,82 +26,62 @@ function vacancyIdFromUrl() {
   return D.vacancies.find(v => v.id === id) ? id : D.vacancies[0].id;
 }
 
-function MatchTag({ percent }) {
+function MatchTag({ percent, compact }) {
   return (
     <Tag size="s" pill icon={<IconSparklesSolid size={12} />} style={{ background: "var(--sk-special-secondary)", color: "rgb(117,59,233)", flexShrink: 0 }}>
-      Подходит на {percent}%
+      {compact ? `${percent}%` : `Подходит на ${percent}%`}
     </Tag>
   );
 }
 
-// Карточка "Подходящие сотрудники": по клику "Почему подходит" разворачивается список причин
-// совпадения (см. matchReasons в данных вакансии), чекбоксы слева включают режим сравнения —
-// при выборе двух и более открывается модалка с карточками кандидатов рядом.
-function MatchingEmployeesCard({ employees }) {
-  const [expanded, setExpanded] = React.useState(null);
-  const [selected, setSelected] = React.useState([]);
-  const [compareOpen, setCompareOpen] = React.useState(false);
-  function toggleSelect(i) { setSelected((s) => s.includes(i) ? s.filter((x) => x !== i) : [...s, i]); }
+function CandidateDetail({ e }) {
+  return (
+    <div className="sk-col sk-gap-2">
+      <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
+        <Avatar name={e.name} size={32} />
+        <div className="sk-label-3">{e.name}</div>
+      </div>
+      <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{e.position} · {e.department}</div>
+      <MatchTag percent={e.matchPercent} />
+      <Divider />
+      <TextList size="s" items={e.matchReasons || []} />
+    </div>
+  );
+}
 
+// Карточка "Подходящие сотрудники" в сайдбаре: компактный список (аватар, имя,
+// должность, процент), шеврон справа — стандартный в этой ДС знак "клик открывает
+// детали" (см. Cell). Клик по строке открывает карточку конкретного кандидата с
+// причинами подбора; ссылка внизу сразу открывает сравнение всех кандидатов рядом.
+function MatchingEmployeesSidebarCard({ employees, onOpenOne, onCompareAll }) {
   return (
     <Card bordered>
-      <div className="sk-col sk-gap-3">
-        <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "center" }}>
-          <div className="sk-row sk-gap-2 sk-label-2"><IconSparklesSolid size={18} color="rgb(117,59,233)" />Подходящие сотрудники</div>
-          {selected.length >= 2 && <Button size="s" mode="secondary" onClick={() => setCompareOpen(true)}>Сравнить · {selected.length}</Button>}
-        </div>
-        <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>
-          Внутренние сотрудники, чей профиль и цели развития перекликаются с этой вакансией.
+      <div className="sk-col sk-gap-1">
+        <div className="sk-row sk-gap-2 sk-label-3" style={{ color: "rgb(117,59,233)" }}>
+          <IconSparklesSolid size={16} color="rgb(117,59,233)" />Подходящие сотрудники
         </div>
         <div className="sk-col">
           {employees.map((e, i) => (
-            <div key={i} style={{ borderTop: i > 0 ? "1px solid var(--sk-stroke)" : "none" }}>
-              <div className="sk-row sk-gap-3" style={{ alignItems: "center", padding: "12px 0" }}>
-                <Checkbox checked={selected.includes(i)} onChange={() => toggleSelect(i)} />
-                <Avatar name={e.name} size={36} />
-                <div className="sk-col" style={{ flex: 1, gap: 0, minWidth: 0 }}>
-                  <div className="sk-label-3">{e.name}</div>
-                  <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{e.position} · {e.department}</div>
-                </div>
-                <MatchTag percent={e.matchPercent} />
-                {e.matchReasons && e.matchReasons.length > 0 && (
-                  <Button size="s" mode="tertiary" onClick={() => setExpanded(expanded === i ? null : i)} style={{ flexShrink: 0 }}>
-                    {expanded === i ? "Скрыть" : "Почему подходит"}
-                  </Button>
-                )}
+            <button key={i} type="button" onClick={() => onOpenOne(i)} className="sk-row sk-gap-2 sk-clickable" style={{
+              alignItems: "center", width: "100%", padding: "8px 0", border: "none", background: "none", cursor: "pointer", textAlign: "left",
+              borderTop: i > 0 ? "1px solid var(--sk-stroke)" : "none",
+            }}>
+              <Avatar name={e.name} size={28} />
+              <div className="sk-col" style={{ flex: 1, gap: 0, minWidth: 0 }}>
+                <div className="sk-label-4" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.name}</div>
+                <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.position}</div>
               </div>
-              {expanded === i && (
-                <div style={{ padding: "0 0 14px 48px" }}>
-                  <TextList size="s" items={e.matchReasons} />
-                </div>
-              )}
-            </div>
+              <MatchTag percent={e.matchPercent} compact />
+              <IconChevronRight size={14} color="var(--sk-icon-secondary)" style={{ flexShrink: 0 }} />
+            </button>
           ))}
         </div>
+        {employees.length > 1 && (
+          <button type="button" onClick={onCompareAll} className="sk-link-btn sk-label-4" style={{ color: "var(--sk-text-accent)", textAlign: "left", marginTop: 4 }}>
+            Сравнить кандидатов
+          </button>
+        )}
       </div>
-
-      {compareOpen && (
-        <Modal open title="Сравнение кандидатов" onClose={() => setCompareOpen(false)} size="l"
-          secondary={<Button mode="secondary" onClick={() => setCompareOpen(false)}>Закрыть</Button>}>
-          <div className="sk-row sk-gap-4" style={{ alignItems: "flex-start" }}>
-            {selected.map((i) => {
-              const e = employees[i];
-              return (
-                <div key={i} className="sk-col sk-gap-2" style={{ flex: 1, minWidth: 0 }}>
-                  <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
-                    <Avatar name={e.name} size={32} />
-                    <div className="sk-label-3">{e.name}</div>
-                  </div>
-                  <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{e.position} · {e.department}</div>
-                  <MatchTag percent={e.matchPercent} />
-                  <Divider />
-                  <TextList size="s" items={e.matchReasons || []} />
-                </div>
-              );
-            })}
-          </div>
-        </Modal>
-      )}
     </Card>
   );
 }
@@ -118,6 +98,9 @@ function DetailRow({ label, value }) {
 function Page() {
   const vacancy = D.vacancies.find(v => v.id === vacancyIdFromUrl());
   const closed = vacancy.status === "closed";
+  const matches = vacancy.matchingEmployees || [];
+  const [openCandidate, setOpenCandidate] = React.useState(null);
+  const [compareOpen, setCompareOpen] = React.useState(false);
 
   return (
     <AppShell role="hr" active="vacancies" base=".."
@@ -167,23 +150,25 @@ function Page() {
               </div>
             </div>
           </Card>
-
-          {vacancy.matchingEmployees && vacancy.matchingEmployees.length > 0 && (
-            <MatchingEmployeesCard employees={vacancy.matchingEmployees} />
-          )}
         </div>
 
-        <div style={{ width: 300, flexShrink: 0 }}>
+        <div className="sk-col sk-gap-5" style={{ width: 300, flexShrink: 0 }}>
+          <Card bordered>
+            <div style={{ background: "var(--sk-accent-secondary)", borderRadius: "var(--sk-radius-3)", padding: "14px 16px" }}>
+              {vacancy.salaryFrom && vacancy.salaryTo ? (
+                <div className="sk-title-5" style={{ color: "var(--sk-text-accent)" }}>{fmtMoney(vacancy.salaryFrom)} – {fmtMoney(vacancy.salaryTo)} ₽</div>
+              ) : (
+                <div className="sk-title-5" style={{ color: "var(--sk-text-accent)" }}>По договорённости</div>
+              )}
+            </div>
+          </Card>
+
+          {matches.length > 0 && (
+            <MatchingEmployeesSidebarCard employees={matches} onOpenOne={setOpenCandidate} onCompareAll={() => setCompareOpen(true)} />
+          )}
+
           <Card bordered>
             <div className="sk-col sk-gap-4">
-              <div style={{ background: "var(--sk-accent-secondary)", borderRadius: "var(--sk-radius-3)", padding: "14px 16px" }}>
-                {vacancy.salaryFrom && vacancy.salaryTo ? (
-                  <div className="sk-title-5" style={{ color: "var(--sk-text-accent)" }}>{fmtMoney(vacancy.salaryFrom)} – {fmtMoney(vacancy.salaryTo)} ₽</div>
-                ) : (
-                  <div className="sk-title-5" style={{ color: "var(--sk-text-accent)" }}>По договорённости</div>
-                )}
-              </div>
-
               <div className="sk-col">
                 <DetailRow label="Регион" value={vacancy.city} />
                 <Divider />
@@ -218,6 +203,27 @@ function Page() {
           </Card>
         </div>
       </div>
+
+      {openCandidate != null && (
+        <Modal open title={matches[openCandidate].name} onClose={() => setOpenCandidate(null)} size="m"
+          secondary={<Button mode="secondary" onClick={() => setOpenCandidate(null)}>Закрыть</Button>}
+          primary={matches.length > 1 && (
+            <Button mode="secondary" onClick={() => { setOpenCandidate(null); setCompareOpen(true); }}>Сравнить с другими</Button>
+          )}>
+          <CandidateDetail e={matches[openCandidate]} />
+        </Modal>
+      )}
+
+      {compareOpen && (
+        <Modal open title="Сравнение кандидатов" onClose={() => setCompareOpen(false)} size="l"
+          secondary={<Button mode="secondary" onClick={() => setCompareOpen(false)}>Закрыть</Button>}>
+          <div className="sk-row sk-gap-4" style={{ alignItems: "flex-start" }}>
+            {matches.map((e, i) => (
+              <div key={i} style={{ flex: 1, minWidth: 0 }}><CandidateDetail e={e} /></div>
+            ))}
+          </div>
+        </Modal>
+      )}
     </AppShell>
   );
 }
