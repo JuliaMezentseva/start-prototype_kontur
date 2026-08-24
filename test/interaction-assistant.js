@@ -38,8 +38,8 @@ setTimeout(() => {
   console.log("Found 'План адаптации' tab:", !!maxTab ? "PASS" : "FAIL");
   maxTab.dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
 setTimeout(() => {
-  // Открыть подцель g2s3 "Провести 5 презентаций продукта клиентам" (reviewer = Дмитрий Волков, статус pending_review)
-  const row = [...w.document.querySelectorAll(".sk-label-3-regular")].find(el => el.textContent.includes("Провести 5 презентаций"));
+  // Открыть подцель g2s3 "Проанализировать 3 компании из подборки" (reviewer = Дмитрий Волков, статус pending_review)
+  const row = [...w.document.querySelectorAll(".sk-label-3-regular")].find(el => el.textContent.includes("Проанализировать 3 компании"));
   console.log("Subgoal row found:", !!row);
   row.closest(".sk-clickable").dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
   setTimeout(() => {

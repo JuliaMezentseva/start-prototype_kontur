@@ -15,9 +15,102 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Card, Tag, Table, Switch, Input, Select, Textarea, Button, Tooltip, Modal, Snackbar, Alert } = window.SkillazCoreDesignSystem_bf9566;
+const { Card, Tag, Table, Switch, Input, Select, Textarea, Button, Checkbox, SegmentedControl, Tooltip, Modal, Snackbar, Alert } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
-const { IconPlusSm, IconUpload, IconSearch, IconEdit, IconFileText, IconArrowLeft, IconChevronRight } = Icons;
+const { IconPlusSm, IconUpload, IconSearch, IconEdit, IconFileText, IconArrowLeft, IconFilter, IconX } = Icons;
+
+function toOptions(list) { return list.map((v) => ({ value: v, label: v })); }
+
+// Тот же чип-фильтр, что на витрине вакансий HR (hr/vacancies.html) — пилюля со значением
+// и крестиком, попап под ней открывает список чекбоксов (плюс поиск для длинных
+// справочников: Направление, Подразделение). Один паттерн фильтров в продукте вместо
+// отдельных Select на каждой странице.
+function FilterChip({ label, options, value, onChange, searchable }) {
+  const [open, setOpen] = React.useState(false);
+  const [q, setQ] = React.useState("");
+  const ref = React.useRef(null);
+  React.useEffect(() => {
+    if (!open) return;
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+
+  const needle = q.trim().toLowerCase();
+  const shown = needle ? options.filter((o) => o.label.toLowerCase().includes(needle)) : options;
+
+  function toggle(v) { onChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v]); }
+
+  const valueLabel = value.length === 1 ? (options.find((o) => o.value === value[0]) || {}).label : null;
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button type="button" onClick={() => setOpen((o) => !o)} className="sk-clickable" style={{
+        display: "inline-flex", alignItems: "center", gap: 6, height: 40, padding: "0 14px",
+        borderRadius: "var(--sk-radius-form)", cursor: "pointer", whiteSpace: "nowrap",
+        border: "1.5px solid var(--sk-stroke)",
+        background: "var(--sk-surface-page)", font: "var(--sk-label-3-regular)",
+        color: "var(--sk-text-primary)",
+      }}>
+        {label}
+        {valueLabel && <span style={{ color: "var(--sk-text-secondary)" }}>: {valueLabel}</span>}
+        {value.length > 1 && <span>{value.length}</span>}
+        <span onClick={(e) => { e.stopPropagation(); onChange([]); }} style={{ display: "inline-flex", color: "var(--sk-icon-secondary)" }}>
+          <IconX size={13} />
+        </span>
+      </button>
+      {open && (
+        <div className="sk-col sk-gap-1" style={{
+          position: "absolute", top: "calc(100% + 4px)", left: 0, zIndex: 50, minWidth: 240, maxHeight: 320, overflowY: "auto",
+          background: "var(--sk-surface-page)", borderRadius: "var(--sk-radius-3)", boxShadow: "var(--sk-shadow-m)", padding: 8,
+        }}>
+          {searchable && (
+            <div style={{ position: "relative" }}>
+              <IconSearch size={13} style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", opacity: 0.45, pointerEvents: "none" }} />
+              <input type="text" autoFocus value={q} onChange={(e) => setQ(e.target.value || "")} placeholder="Поиск" style={{
+                width: "100%", height: 28, padding: "0 8px 0 26px", boxSizing: "border-box", borderRadius: "var(--sk-radius-2)",
+                border: "1px solid var(--sk-stroke)", background: "var(--sk-surface-page)",
+                font: "var(--sk-label-4-regular)", color: "var(--sk-text-primary)", outline: "none", marginBottom: 4,
+              }} />
+            </div>
+          )}
+          {shown.length ? shown.map((o) => (
+            <label key={o.value} className="sk-row sk-gap-2" style={{ padding: "6px 4px", cursor: "pointer", alignItems: "center" }}>
+              <Checkbox checked={value.includes(o.value)} onChange={() => toggle(o.value)} />
+              <span className="sk-label-4-regular">{o.label}</span>
+            </label>
+          )) : (searchable && needle && (
+            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", padding: "6px 4px" }}>Ничего не найдено</div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Бирка-саммари рядом с поиском — та же, что на витрине: показывает число активных
+// фильтров и разом сбрасывает все (крестик виден только когда есть что сбрасывать).
+// Клик по самой бирке сворачивает/разворачивает ряд чипов ниже.
+function FiltersSummaryChip({ count, open, onToggle, onReset }) {
+  const active = count > 0;
+  return (
+    <button type="button" onClick={onToggle} className="sk-clickable" style={{
+      display: "inline-flex", alignItems: "center", gap: 6, height: 40, padding: "0 14px",
+      borderRadius: "var(--sk-radius-form)", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
+      border: `1.5px solid ${active ? "var(--sk-stroke-accent)" : "var(--sk-stroke)"}`,
+      background: "var(--sk-surface-page)", font: "var(--sk-label-3-regular)",
+      color: "var(--sk-text-primary)",
+    }}>
+      <IconFilter size={16} />
+      Фильтры{active ? " " + count : ""}
+      {active && (
+        <span onClick={(e) => { e.stopPropagation(); onReset(); }} style={{ display: "inline-flex", color: "var(--sk-icon-secondary)" }}>
+          <IconX size={14} />
+        </span>
+      )}
+    </button>
+  );
+}
 
 const D = window.SITE_DATA;
 
@@ -107,6 +200,8 @@ function ColumnsPicker({ visible, onApply }) {
   );
 }
 
+const emptyFilters = { directions: [], departments: [], cities: [], formats: [], employments: [], sources: [], visibilities: [] };
+
 const emptyForm = {
   title: "", direction: D.directions[0], department: "", city: D.cities[0], format: D.workFormats[0],
   grade: "", employment: D.employmentTypes[0], salaryFrom: "", salaryTo: "", experience: D.experienceOptions[0],
@@ -157,8 +252,9 @@ function Page() {
   const [showClosed, setShowClosed] = React.useState(false);
   const [sortBy, setSortBy] = React.useState(null); // null | { key, dir: "asc" | "desc" }
   const [filtersOpen, setFiltersOpen] = React.useState(false);
-  const [filters, setFilters] = React.useState({ direction: "", department: "", city: "", format: "", employment: "", source: "", visibility: "" });
-  const [visibleOptionalCols, setVisibleOptionalCols] = React.useState([]);
+  const [filters, setFilters] = React.useState(emptyFilters);
+  const [visibleOptionalCols, setVisibleOptionalCols] = React.useState(["source"]);
+  const [pendingToggle, setPendingToggle] = React.useState(null); // вакансия, для которой открыт диалог подтверждения смены видимости
 
   function showToast(msg) { setToast(msg); window.setTimeout(() => setToast(null), 2600); }
 
@@ -197,15 +293,15 @@ function Page() {
   const needle = q.trim().toLowerCase();
   const filteredList = React.useMemo(() => {
     let list = vacancies;
-    if (!showClosed) list = list.filter((v) => v.status !== "closed");
+    list = list.filter((v) => (v.status === "closed") === showClosed);
     if (needle) list = list.filter((v) => v.title.toLowerCase().includes(needle) || v.department.toLowerCase().includes(needle));
-    if (filters.direction) list = list.filter((v) => v.direction === filters.direction);
-    if (filters.department) list = list.filter((v) => v.department === filters.department);
-    if (filters.city) list = list.filter((v) => v.city === filters.city);
-    if (filters.format) list = list.filter((v) => v.format === filters.format);
-    if (filters.employment) list = list.filter((v) => v.employment === filters.employment);
-    if (filters.source) list = list.filter((v) => (v.source || "ats") === filters.source);
-    if (filters.visibility) list = list.filter((v) => (filters.visibility === "visible") === !!v.visibleToEmployees);
+    if (filters.directions.length) list = list.filter((v) => filters.directions.includes(v.direction));
+    if (filters.departments.length) list = list.filter((v) => filters.departments.includes(v.department));
+    if (filters.cities.length) list = list.filter((v) => filters.cities.includes(v.city));
+    if (filters.formats.length) list = list.filter((v) => filters.formats.includes(v.format));
+    if (filters.employments.length) list = list.filter((v) => filters.employments.includes(v.employment));
+    if (filters.sources.length) list = list.filter((v) => filters.sources.includes(v.source || "ats"));
+    if (filters.visibilities.length) list = list.filter((v) => filters.visibilities.includes(v.visibleToEmployees ? "visible" : "hidden"));
     if (sortBy) {
       const dir = sortBy.dir === "asc" ? 1 : -1;
       list = [...list].sort((a, b) => {
@@ -225,8 +321,9 @@ function Page() {
 
   const departmentOptions = [...new Set(D.vacancies.map((v) => v.department))].sort();
   const cityOptions = [...new Set(D.vacancies.map((v) => v.city))].sort();
-  const hasActiveFilters = Object.values(filters).some(Boolean);
-  const activeFilterCount = Object.values(filters).filter(Boolean).length;
+  const activeFilterCount = filters.directions.length + filters.departments.length + filters.cities.length
+    + filters.formats.length + filters.employments.length + filters.sources.length + filters.visibilities.length;
+  const hasActiveFilters = activeFilterCount > 0;
 
   function toggleSort(key) {
     setSortBy((s) => {
@@ -255,7 +352,7 @@ function Page() {
   // чтобы таблица не разрасталась вширь у всех сразу, а админ сам решал, что ему нужно.
   const optionalColumnDefs = {
     source: { key: "source", title: "Источник", render: (v) => (
-      <Tag size="s" hue={v.source === "manual" ? "accent" : "neutral"}>{v.source === "manual" ? "Создана вручную" : "АТС"}</Tag>
+      <Tag size="s" hue={v.source === "manual" ? "accent" : "neutral"}>{v.source === "manual" ? "Вручную" : "ATS"}</Tag>
     ) },
     department: { key: "department", title: <SortableHeader label="Подразделение" sortKey="department" />, render: (v) => <span className="sk-label-3-regular">{v.department}</span> },
     city: { key: "city", title: <SortableHeader label="Регион" sortKey="city" />, render: (v) => <span className="sk-label-3-regular">{v.city}</span> },
@@ -265,26 +362,25 @@ function Page() {
   };
 
   const columns = [
-    { key: "title", title: <SortableHeader label="Вакансия" sortKey="title" />, width: "24%", render: (v) => (
+    { key: "title", title: <SortableHeader label="Вакансия" sortKey="title" />, width: "34%", render: (v) => (
       <span className="sk-label-3">{v.title}</span>
     ) },
     { key: "visible", title: "Видимость в витрине", render: (v) => (
       <div className="sk-row sk-gap-2" onClick={(e) => e.stopPropagation()}>
-        <Switch checked={!!v.visibleToEmployees} onChange={() => togglePublish(v)} />
+        <Switch checked={!!v.visibleToEmployees} onChange={() => setPendingToggle(v)} />
         <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{v.visibleToEmployees ? "Видна" : "Скрыта"}</span>
       </div>
     ) },
     ...OPTIONAL_COLUMNS.filter((c) => visibleOptionalCols.includes(c.key)).map((c) => optionalColumnDefs[c.key]),
-    { key: "direction", title: "Направление", render: (v) => <Tag size="s" hue="neutral">{v.direction}</Tag> },
+    { key: "direction", title: "Направление", render: (v) => <span style={{ font: "var(--sk-label-3-regular)" }}>{v.direction}</span> },
     { key: "status", title: "Статус найма", render: (v) => <Tag size="s" hue={v.status === "open" ? "positive" : "neutral"}>{v.status === "open" ? "Идёт поиск" : "Закрыта"}</Tag> },
     { key: "date", title: <SortableHeader label="Дата публикации" sortKey="date" />, render: (v) => (
-      <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{v.createdAt === "сегодня" ? "Сегодня" : (v.postedDate || "—")}</span>
+      <span className="sk-muted" style={{ font: "var(--sk-label-3-regular)" }}>{v.createdAt === "сегодня" ? "Сегодня" : (v.postedDate || "—")}</span>
     ) },
     { key: "responses", title: <SortableHeader label="Отклики" sortKey="responses" />, render: (v) => (
       v.responsesCount > 0 ? (
-        <a href={"vacancy-responses.html?id=" + v.id} onClick={(e) => e.stopPropagation()} className="sk-row sk-gap-1"
-          style={{ alignItems: "center", color: "var(--sk-text-accent)", font: "var(--sk-label-3)", textDecoration: "none" }}>
-          {v.responsesCount}<IconChevronRight size={14} />
+        <a href={"vacancy-responses.html?id=" + v.id} onClick={(e) => e.stopPropagation()} style={{ textDecoration: "none" }}>
+          <span style={{ color: "var(--sk-text-accent)", font: "var(--sk-label-3)" }}>{v.responsesCount}</span>
         </a>
       ) : (
         <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>0</span>
@@ -324,56 +420,33 @@ function Page() {
           <Tooltip content={<div style={{ maxWidth: 200, whiteSpace: "normal" }}>Импорт из Excel — вне текущей итерации прототипа.</div>}>
             <Button style={{ background: "var(--sk-accent-secondary)", color: "var(--sk-text-accent)" }} icon={<IconUpload size={16} />} disabled>Загрузить вакансии</Button>
           </Tooltip>
-          <Button variant="accent" icon={<IconPlusSm size={16} />} onClick={() => { window.location.href = "vacancy-new.html"; }}>Создать вакансию</Button>
+          <Button variant="accent" icon={<IconPlusSm size={16} />} onClick={() => { window.location.href = "vacancy-new.html"; }}>Создать</Button>
         </div>
       </div>
 
       <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
         <Input size="s" icon={<IconSearch size={20} />} placeholder="Поиск по названию или подразделению" value={q} onChange={(e) => setQ(e.target.value || "")} style={{ maxWidth: 420, flex: 1 }} />
-        <Button mode="secondary" icon={<Icons.IconFilter size={16} />} onClick={() => setFiltersOpen((o) => !o)}
-          style={{ background: "var(--sk-surface-page)", border: "1px solid var(--sk-stroke)" }}>
-          Фильтры{hasActiveFilters ? " · " + activeFilterCount : ""}
-        </Button>
-        <div style={{ marginLeft: "auto" }}>
+        <FiltersSummaryChip count={activeFilterCount} open={filtersOpen} onToggle={() => setFiltersOpen((o) => !o)} onReset={() => setFilters(emptyFilters)} />
+        <div className="sk-row sk-gap-2" style={{ marginLeft: "auto", alignItems: "center" }}>
+          <SegmentedControl
+            items={[{ id: "open", label: "Идёт поиск" }, { id: "closed", label: "Закрытые" }]}
+            active={showClosed ? "closed" : "open"}
+            onChange={(id) => setShowClosed(id === "closed")} />
           <ColumnsPicker visible={visibleOptionalCols} onApply={setVisibleOptionalCols} />
         </div>
       </div>
 
       {filtersOpen && (
-        <Card bordered>
-          <div className="sk-row sk-gap-3" style={{ flexWrap: "wrap", alignItems: "flex-end" }}>
-            <Select label="Направление" value={filters.direction} placeholder="Любое направление"
-              options={D.directions.map((d) => ({ value: d, label: d }))}
-              onChange={(v) => setFilters((f) => ({ ...f, direction: v }))} style={{ minWidth: 200 }} />
-            <Select label="Подразделение" value={filters.department} placeholder="Любое подразделение"
-              options={departmentOptions.map((d) => ({ value: d, label: d }))}
-              onChange={(v) => setFilters((f) => ({ ...f, department: v }))} style={{ minWidth: 200 }} />
-            <Select label="Регион" value={filters.city} placeholder="Любой регион"
-              options={cityOptions.map((c) => ({ value: c, label: c }))}
-              onChange={(v) => setFilters((f) => ({ ...f, city: v }))} style={{ minWidth: 180 }} />
-            <Select label="Формат работы" value={filters.format} placeholder="Любой формат"
-              options={D.workFormats.map((f) => ({ value: f, label: f }))}
-              onChange={(v) => setFilters((f) => ({ ...f, format: v }))} style={{ minWidth: 180 }} />
-            <Select label="Тип занятости" value={filters.employment} placeholder="Любой тип"
-              options={D.employmentTypes.map((e) => ({ value: e, label: e }))}
-              onChange={(v) => setFilters((f) => ({ ...f, employment: v }))} style={{ minWidth: 180 }} />
-            <Select label="Источник" value={filters.source} placeholder="Любой источник"
-              options={[{ value: "ats", label: "АТС" }, { value: "manual", label: "Создана вручную" }]}
-              onChange={(v) => setFilters((f) => ({ ...f, source: v }))} style={{ minWidth: 180 }} />
-            <Select label="Видимость в витрине" value={filters.visibility} placeholder="Любой статус"
-              options={[{ value: "visible", label: "Видна" }, { value: "hidden", label: "Скрыта" }]}
-              onChange={(v) => setFilters((f) => ({ ...f, visibility: v }))} style={{ minWidth: 200 }} />
-            {hasActiveFilters && (
-              <Button mode="tertiary" onClick={() => setFilters({ direction: "", department: "", city: "", format: "", employment: "", source: "", visibility: "" })}>Сбросить</Button>
-            )}
-          </div>
-        </Card>
+        <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>
+          <FilterChip label="Направление" searchable options={toOptions(D.directions)} value={filters.directions} onChange={(v) => setFilters((f) => ({ ...f, directions: v }))} />
+          <FilterChip label="Подразделение" searchable options={toOptions(departmentOptions)} value={filters.departments} onChange={(v) => setFilters((f) => ({ ...f, departments: v }))} />
+          <FilterChip label="Регион" options={toOptions(cityOptions)} value={filters.cities} onChange={(v) => setFilters((f) => ({ ...f, cities: v }))} />
+          <FilterChip label="Формат работы" options={toOptions(D.workFormats)} value={filters.formats} onChange={(v) => setFilters((f) => ({ ...f, formats: v }))} />
+          <FilterChip label="Тип занятости" options={toOptions(D.employmentTypes)} value={filters.employments} onChange={(v) => setFilters((f) => ({ ...f, employments: v }))} />
+          <FilterChip label="Источник" options={[{ value: "ats", label: "ATS" }, { value: "manual", label: "Вручную" }]} value={filters.sources} onChange={(v) => setFilters((f) => ({ ...f, sources: v }))} />
+          <FilterChip label="Видимость в витрине" options={[{ value: "visible", label: "Видна" }, { value: "hidden", label: "Скрыта" }]} value={filters.visibilities} onChange={(v) => setFilters((f) => ({ ...f, visibilities: v }))} />
+        </div>
       )}
-
-      <label className="sk-row sk-gap-2 sk-clickable" style={{ font: "var(--sk-label-4-regular)", color: "var(--sk-text-secondary)" }}>
-        <input type="checkbox" checked={showClosed} onChange={(e) => setShowClosed(e.target.checked)} />
-        Показать закрытые
-      </label>
 
       <div className="sk-scroll" style={{ overflowX: "auto" }}>
         <Table columns={columns} rows={filtered} onRowClick={(v) => { window.location.href = "vacancy.html?id=" + v.id; }} />
@@ -393,6 +466,21 @@ function Page() {
             requiredSkills: (formModal.vacancy.requiredSkills || []).join(", "),
           } : null}
           onClose={() => setFormModal(null)} onSave={saveForm} />
+      )}
+
+      {pendingToggle && (
+        <Modal open title={pendingToggle.visibleToEmployees ? "Скрыть вакансию из витрины?" : "Опубликовать вакансию на витрине?"}
+          onClose={() => setPendingToggle(null)} size="s"
+          secondary={<Button mode="secondary" onClick={() => setPendingToggle(null)}>Отмена</Button>}
+          primary={<Button variant="accent" onClick={() => { togglePublish(pendingToggle); setPendingToggle(null); }}>
+            {pendingToggle.visibleToEmployees ? "Скрыть" : "Опубликовать"}
+          </Button>}>
+          <div>
+            {pendingToggle.visibleToEmployees
+              ? <React.Fragment>Сотрудники перестанут видеть вакансию «{pendingToggle.title}».</React.Fragment>
+              : <React.Fragment>Вакансия «{pendingToggle.title}» станет видна сотрудникам на витрине и будет доступна для откликов.</React.Fragment>}
+          </div>
+        </Modal>
       )}
 
       {toast && (

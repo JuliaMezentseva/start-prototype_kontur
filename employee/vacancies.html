@@ -15,9 +15,9 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Card, Tag, Input, Button, Checkbox, Tabs, Snackbar } = window.SkillazCoreDesignSystem_bf9566;
+const { Card, Tag, Input, Button, Checkbox, Tabs, Snackbar, Tooltip } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
-const { IconSearch, IconMapPin, IconBriefcase, IconX, IconFilter, IconSparklesSolid } = Icons;
+const { IconSearch, IconMapPin, IconBriefcase, IconX, IconFilter, IconSparklesSolid, IconBell } = Icons;
 const D = window.SITE_DATA;
 
 // Переключатель "Вакансии / Мои отклики" — это переход между двумя разными HTML-страницами
@@ -48,16 +48,6 @@ function IconThumbUp({ size = 24, color = "currentColor", style }) {
   );
 }
 
-function IconBell({ size = 24, color = "currentColor", style }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ color, flexShrink: 0, ...style }}>
-      <path d="M12 4a6 6 0 0 0-6 6v3.2l-1.4 2.4a.8.8 0 0 0 .7 1.2h13.4a.8.8 0 0 0 .7-1.2L18 13.2V10a6 6 0 0 0-6-6Z"
-        stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-      <path d="M10 19.5a2 2 0 0 0 4 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 function fmtMoney(n) { return n.toLocaleString("ru-RU"); }
 function toOptions(list) { return list.map((v) => ({ value: v, label: v })); }
 
@@ -79,25 +69,57 @@ function filtersSignature(filters) {
 }
 
 // Подписка на уведомления по текущим фильтрам: компактная пилюля-кнопка (в духе job
-// alert на hh.ru/LinkedIn), сидит в одном ряду с "Найдено вакансий" справа. Клик сохраняет
-// снимок filters как отдельную подписку — если подписок несколько, они показаны бирками
-// ниже, каждую можно снять по отдельности. Без тогла — сам клик по пилюле переключает
-// подписку, второй клик снимает её же (см. правки по референсу из ДС).
+// alert на hh.ru/LinkedIn), сидит в одном ряду с "Найдено вакансий" справа. Клик по
+// выключенной пилюле сразу подписывает; клик по включённой ("Вы подписаны") не отписывает
+// сразу, а открывает попап с перечнем фильтров подписки и кнопкой "Отписаться" — так
+// видно, по каким именно условиям сейчас действует подписка, прежде чем её снять.
 function SubscribeBar({ filters, hasActiveFilters, subscriptions, onSubscribe, onUnsubscribe }) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef(null);
+  React.useEffect(() => {
+    if (!open) return;
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+
   const sig = filtersSignature(filters);
   const isOn = hasActiveFilters && subscriptions.some((s) => s.sig === sig);
-  return (
+  const activeValues = Object.keys(FILTER_LABELS).flatMap((k) => filters[k]);
+
+  const btn = (
     <button type="button" disabled={!hasActiveFilters}
-      onClick={() => (isOn ? onUnsubscribe(sig) : onSubscribe(sig, filters))}
+      onClick={() => (isOn ? setOpen((o) => !o) : onSubscribe(sig, filters))}
       className="sk-row sk-gap-2 sk-clickable" style={{
-        alignItems: "center", flexShrink: 0, height: 36, padding: "0 14px", border: "none",
-        borderRadius: "var(--sk-radius-full)", background: "var(--sk-surface-tertiary)",
-        color: "var(--sk-text-secondary)", font: "var(--sk-label-4-regular)",
+        alignItems: "center", flexShrink: 0, height: 32, padding: "0 12px", border: "none",
+        borderRadius: 8, background: "var(--sk-surface-secondary)",
+        color: "var(--graphite-graphite-35)", font: "var(--sk-label-3-regular)", letterSpacing: "0.01em",
         cursor: hasActiveFilters ? "pointer" : "default", opacity: hasActiveFilters ? 1 : 0.6, whiteSpace: "nowrap",
-      }} title={hasActiveFilters ? undefined : "Выберите фильтр, чтобы подписаться на уведомления"}>
-      <IconBell size={16} color={isOn ? "var(--sk-icon-accent)" : "var(--sk-icon-secondary)"} />
+      }}>
+      <IconBell size={15} color="var(--sk-icon-secondary)" />
       {isOn ? "Вы подписаны" : "Подписаться на новые"}
     </button>
+  );
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      {hasActiveFilters ? btn : <Tooltip content="Выберите фильтр, чтобы подписаться на уведомления о новых вакансиях">{btn}</Tooltip>}
+      {open && isOn && (
+        <div className="sk-col sk-gap-3" style={{
+          position: "absolute", top: "calc(100% + 4px)", right: 0, zIndex: 50, width: 280,
+          background: "var(--sk-surface-page)", borderRadius: "var(--sk-radius-3)", boxShadow: "var(--sk-shadow-m)", padding: 16,
+        }}>
+          <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Подписка активна по фильтрам:</div>
+          <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>
+            {activeValues.map((v, i) => <Tag key={i} hue="neutral">{v}</Tag>)}
+          </div>
+          <button type="button" onClick={() => { onUnsubscribe(sig); setOpen(false); }} className="sk-clickable" style={{
+            height: 44, borderRadius: "var(--sk-radius-form)", border: "1.5px solid var(--sk-stroke)",
+            background: "var(--sk-surface-page)", font: "600 14px/20px var(--sk-font-ui)", color: "var(--sk-text-primary)", cursor: "pointer",
+          }}>Отписаться</button>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -136,12 +158,12 @@ function FiltersSummaryChip({ count, open, onToggle, onReset }) {
       borderRadius: "var(--sk-radius-form)", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
       border: `1.5px solid ${active ? "var(--sk-stroke-accent)" : "var(--sk-stroke)"}`,
       background: "var(--sk-surface-page)", font: "var(--sk-label-3-regular)",
-      color: active ? "var(--sk-text-accent)" : "var(--sk-text-primary)",
+      color: "var(--sk-text-primary)",
     }}>
       <IconFilter size={16} />
       Фильтры{active ? " " + count : ""}
       {active && (
-        <span onClick={(e) => { e.stopPropagation(); onReset(); }} style={{ display: "inline-flex", opacity: 0.7 }}>
+        <span onClick={(e) => { e.stopPropagation(); onReset(); }} style={{ display: "inline-flex", color: "var(--sk-icon-secondary)" }}>
           <IconX size={14} />
         </span>
       )}
@@ -179,18 +201,16 @@ function FilterChip({ label, options, value, onChange, searchable }) {
       <button type="button" onClick={() => setOpen((o) => !o)} className="sk-clickable" style={{
         display: "inline-flex", alignItems: "center", gap: 6, height: 40, padding: "0 14px",
         borderRadius: "var(--sk-radius-form)", cursor: "pointer", whiteSpace: "nowrap",
-        border: `1.5px solid ${value.length ? "var(--sk-stroke-accent)" : "var(--sk-stroke)"}`,
+        border: "1.5px solid var(--sk-stroke)",
         background: "var(--sk-surface-page)", font: "var(--sk-label-3-regular)",
-        color: value.length ? "var(--sk-text-accent)" : "var(--sk-text-primary)",
+        color: "var(--sk-text-primary)",
       }}>
         {label}
         {valueLabel && <span style={{ color: "var(--sk-text-secondary)" }}>: {valueLabel}</span>}
         {value.length > 1 && <span>{value.length}</span>}
-        {value.length > 0 && (
-          <span onClick={(e) => { e.stopPropagation(); onChange([]); }} style={{ display: "inline-flex", opacity: 0.7 }}>
-            <IconX size={13} />
-          </span>
-        )}
+        <span onClick={(e) => { e.stopPropagation(); onChange([]); }} style={{ display: "inline-flex", color: "var(--sk-icon-secondary)" }}>
+          <IconX size={13} />
+        </span>
       </button>
       {open && (
         <div className="sk-col sk-gap-1" style={{
@@ -268,7 +288,7 @@ function VacancyCard({ vacancy, hasResponse, matchPercent }) {
               ? <Tag size="s" hue="positive" icon={<IconThumbUp size={13} />}>Уже откликнулись</Tag>
               : closed
                 ? <Tag size="s" hue="neutral">Закрыта</Tag>
-                : (vacancy.isNew && <Tag size="s" pill style={{ background: "var(--sk-accent)", color: "var(--sk-text-contrast)" }}>Новая</Tag>)}
+                : (vacancy.isNew && <Tag size="s" style={{ background: "var(--sk-accent)", color: "var(--sk-text-contrast)" }}>Новая</Tag>)}
           </div>
 
           <div className="sk-label-3-regular">
@@ -277,11 +297,11 @@ function VacancyCard({ vacancy, hasResponse, matchPercent }) {
 
           <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>
             {matchPercent != null && (
-              <Tag size="s" pill icon={<IconSparklesSolid size={12} />} style={{ background: "var(--sk-special-secondary)", color: "rgb(117,59,233)" }}>
+              <Tag size="s" icon={<IconSparklesSolid size={12} />} style={{ background: "var(--sk-special-secondary)", color: "rgb(117,59,233)" }}>
                 Подходите на {Math.round(matchPercent)}%
               </Tag>
             )}
-            <Tag size="s" hue="gray" pill>{vacancy.transitionType}</Tag>
+            <Tag size="s" hue="gray">{vacancy.transitionType}</Tag>
           </div>
 
           <div className="sk-row sk-gap-2 sk-muted" style={{ font: "var(--sk-label-4-regular)", flexWrap: "wrap" }}>
@@ -355,7 +375,7 @@ function Page() {
 
   return (
     <AppShell role="employee" active="vacancies" base="..">
-      <div className="sk-title-4">Откройте новые карьерные возможности</div>
+      <div className="sk-title-3">Откройте новые карьерные возможности</div>
       <EmployeeVacanciesTabs active="showcase" responsesCount={responses.length} />
 
       <div className="sk-col sk-gap-3">
@@ -377,7 +397,7 @@ function Page() {
             directionOptions={directionOptions} positionOptions={positionOptions} departmentOptions={departmentOptions} />
         )}
 
-        <div className="sk-row" style={{ alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+        <div className="sk-row" style={{ alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginTop: "var(--sk-space-2)" }}>
           <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Найдено вакансий: {filtered.length}</div>
           <SubscribeBar filters={filters} hasActiveFilters={hasActiveFilters} subscriptions={subscriptions}
             onSubscribe={subscribe} onUnsubscribe={unsubscribe} />

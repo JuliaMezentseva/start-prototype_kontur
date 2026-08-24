@@ -104,13 +104,13 @@ function check(label, ok) {
     check("[1c] строка чекбокса оценочного листа найдена", !!assessRow);
     click(assessRow, w1);
     await tick(120);
-    check("[1c] после клика появился select с готовыми листами", w1.document.body.textContent.includes("Первое обращение клиента"));
+    check("[1c] после клика появился select с готовыми листами", w1.document.body.textContent.includes("Первая консультация покупателя"));
 
     // ================= Сценарий 2: дровер шага С оценочным листом (Алексей, alg1s2 — pending_review) =================
     const w2 = loadPage(target, "employee=alexey&tab=max");
     await tick(200);
     const stepRows = [...w2.document.querySelectorAll(".sk-row.sk-clickable, .sk-clickable")]
-      .filter(el => el.textContent.includes("Обработать первое обращение клиента") && el.className.includes("sk-row"));
+      .filter(el => el.textContent.includes("Провести первую консультацию покупателя") && el.className.includes("sk-row"));
     const stepRow = stepRows[stepRows.length - 1]; // самая внутренняя строка подцели, не карточка цели
     check("[2] строка шага с pending_review найдена", !!stepRow);
     click(stepRow, w2);
@@ -118,7 +118,7 @@ function check(label, ok) {
 
     check("[2] заголовок «Оцените результаты» отображается", w2.document.body.textContent.includes("Оцените результаты"));
     check("[2] старый текст «Цель на проверке» отсутствует", !w2.document.body.textContent.includes("Цель на проверке"));
-    check("[2] файл-вложение сотрудника в комментарии виден", w2.document.body.textContent.includes("Запись обращения.pdf"));
+    check("[2] файл-вложение сотрудника в комментарии виден", w2.document.body.textContent.includes("Отчёт по консультации.pdf"));
 
     const evalBtn = findButtonByText(w2, "Оценить");
     check("[2] кнопка «Оценить» найдена", !!evalBtn);
@@ -143,13 +143,13 @@ function check(label, ok) {
 
     click(confirmBtn, w2);
     await tick(150);
-    check("[2] после подтверждения дровер закрылся (решение применено)", !w2.document.body.textContent.includes("Оценочный лист: первое обращение"));
+    check("[2] после подтверждения дровер закрылся (решение применено)", !w2.document.body.textContent.includes("Оценочный лист: первая консультация"));
 
     // ================= Сценарий 3: цвета кнопок в AssessmentModal заданы явно (не прозрачный tertiary) =================
     const w3 = loadPage(target, "employee=alexey&tab=max");
     await tick(150);
     const stepRows3 = [...w3.document.querySelectorAll(".sk-clickable")]
-      .filter(el => el.textContent.includes("Обработать первое обращение клиента") && el.className.includes("sk-row"));
+      .filter(el => el.textContent.includes("Провести первую консультацию покупателя") && el.className.includes("sk-row"));
     click(stepRows3[stepRows3.length - 1], w3);
     await tick(120);
     click(findButtonByText(w3, "Оценить"), w3);

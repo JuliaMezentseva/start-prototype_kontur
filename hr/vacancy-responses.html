@@ -15,9 +15,9 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Card, Avatar, Divider, Button, Modal, Input, Table, SegmentedControl, Select } = window.SkillazCoreDesignSystem_bf9566;
-const { AppShell, Icons } = window.Site;
-const { IconArrowLeft, IconMapPin, IconBriefcase, IconPhone, IconMail, IconSearch, IconFileText, IconDownload } = Icons;
+const { Card, Avatar, Button, Input, Select, Tag, Divider } = window.SkillazCoreDesignSystem_bf9566;
+const { AppShell, Icons, ClearableSelect } = window.Site;
+const { IconArrowLeft, IconMapPin, IconBriefcase, IconPhone, IconMail, IconSearch, IconFileText } = Icons;
 const D = window.SITE_DATA;
 
 function vacancyIdFromUrl() {
@@ -48,8 +48,8 @@ function downloadResume(r) {
   URL.revokeObjectURL(url);
 }
 
-// Стаж и дата — свободный текст ("2 года 3 месяца", "14.03.26"), для сортировки и
-// фильтра по стажу разбираем их в сравнимые числа.
+// Стаж — свободный текст ("2 года 3 месяца"), для сортировки и фильтра по стажу
+// разбираем его в сравнимое число месяцев.
 function parseTenureMonths(t) {
   const nums = ((t || "").match(/\d+/g) || []).map(Number);
   return (nums[0] || 0) * 12 + (nums[1] || 0);
@@ -61,126 +61,109 @@ function tenureBucket(t) {
   return "gt3";
 }
 const TENURE_BUCKET_LABELS = { lt1: "До 1 года", "1to3": "От 1 до 3 лет", gt3: "Более 3 лет" };
+
 function parseDate(d) {
-  const m = /^(\d{2})\.(\d{2})\.(\d{2})$/.exec(d || "");
-  return m ? Number(m[3]) * 10000 + Number(m[2]) * 100 + Number(m[1]) : 0;
+  const [dd, mm, yy] = (d || "").split(".").map(Number);
+  return new Date(2000 + (yy || 0), (mm || 1) - 1, dd || 1).getTime();
 }
 
-function DetailRow({ label, value }) {
+const SORT_OPTIONS = [
+  { value: "date:desc", label: "Дата отклика: сначала новые" },
+  { value: "date:asc", label: "Дата отклика: сначала старые" },
+  { value: "", label: "Без сортировки" },
+  { value: "name:asc", label: "Имя: А→Я" },
+  { value: "tenure:desc", label: "Стаж: сначала больше" },
+  { value: "tenure:asc", label: "Стаж: сначала меньше" },
+  { value: "city:asc", label: "Город: А→Я" },
+];
+
+// Карточка отклика — основной и единственный вид списка (без клика — вся нужная
+// информация, включая резюме, видна сразу на самой карточке, открывать больше нечего).
+// Раньше здесь была таблица, но сопроводительное письмо в узкой колонке с обрезкой
+// в 1–2 строки мелким серым текстом читалось плохо — а именно ради него админ и
+// открывает отклик, поэтому под письмо отдельный блок нормальным текстом.
+// Письмо клэмпим на 4 строки по умолчанию и раскрываем по клику — так карточка не
+// разъезжается на весь экран сразу, но длинное письмо (по факту они будут длиннее,
+// чем в моке) всё равно можно дочитать целиком в один клик, без модалки.
+function LetterBlock({ letter }) {
+  const [expanded, setExpanded] = React.useState(false);
+  const text = letter || "Кандидат не оставил сопроводительное письмо.";
+  const isLong = text.length > 220;
   return (
-    <div className="sk-row" style={{ justifyContent: "space-between", padding: "6px 0" }}>
-      <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{label}</span>
-      <span className="sk-label-4">{value}</span>
+    <div className="sk-col sk-gap-1">
+      <div className="sk-label-3-regular" style={{
+        color: "var(--sk-text-primary)", whiteSpace: "pre-wrap",
+        ...(isLong && !expanded ? { display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical", overflow: "hidden" } : {}),
+      }}>
+        {text}
+      </div>
+      {isLong && (
+        <button type="button" onClick={() => setExpanded((e) => !e)} className="sk-link-btn"
+          style={{ alignSelf: "flex-start", color: "var(--sk-text-accent)", font: "var(--sk-label-4)" }}>
+          {expanded ? "Свернуть" : "Читать полностью"}
+        </button>
+      )}
     </div>
   );
 }
 
-// Карточка "файла" резюме — в контуре нет настоящего загруженного файла, поэтому вместо
-// пиктограммы конкретного формата показываем нейтральную карточку документа с кнопкой
-// скачивания сгенерированного на лету текстового слепка тех же данных (см. downloadResume).
+// Тот же вид, что и ResumeCard в employee/my-responses.html — простая белая плашка с
+// рамкой, без серой подложки и без отдельной кнопки, кликабельна целиком.
 function ResumeCard({ r }) {
+  const name = "Резюме_" + r.lastName + "_" + r.firstName + ".pdf";
   return (
-    <div className="sk-row sk-gap-3" style={{
+    <div className="sk-row sk-gap-3 sk-clickable" onClick={() => downloadResume(r)} style={{
       alignItems: "center", padding: "12px 14px", borderRadius: "var(--sk-radius-3)",
-      background: "var(--sk-surface-secondary)",
+      border: "1px solid var(--sk-stroke)", background: "var(--sk-surface-page)", maxWidth: 320,
     }}>
       <div style={{
         width: 36, height: 36, borderRadius: "var(--sk-radius-2)", flexShrink: 0,
-        display: "flex", alignItems: "center", justifyContent: "center", background: "var(--sk-surface-tertiary)",
-      }}>
-        <IconFileText size={18} color="var(--sk-icon-secondary)" />
-      </div>
-      <div className="sk-col" style={{ flex: 1, gap: 0, minWidth: 0 }}>
-        <div className="sk-label-4">Резюме_{r.lastName}_{r.firstName}</div>
-        <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Собрано из данных отклика</div>
-      </div>
-      <Button mode="secondary" size="s" icon={<IconDownload size={15} />} onClick={() => downloadResume(r)}>Скачать</Button>
+        display: "flex", alignItems: "center", justifyContent: "center", background: "var(--sk-accent-secondary)",
+      }}><IconFileText size={18} color="var(--sk-icon-accent)" /></div>
+      <div className="sk-label-4" style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</div>
     </div>
   );
 }
 
-// Карточка отклика — альтернатива табличному виду: то же самое одно нажатие открывает
-// ту же ResponseDetailModal, но здесь сразу видно начало сопроводительного письма —
-// удобнее, когда откликов немного и хочется быстро пробежать глазами по мотивации,
-// а не сравнивать сухие поля по колонкам (для этого лучше подходит таблица).
-function ResponseCard({ r, onOpen }) {
-  const [hovered, setHovered] = React.useState(false);
+// Карточка отклика — контакты живут в том же левом блоке, что и остальная инфа о
+// кандидате (рядом с должностью/стажем/городом), а не оторваны в отдельную колонку
+// справа — так они читаются как часть одного профиля. Дата отклика, наоборот, не
+// относится к кандидату, а описывает событие — поэтому она одна остаётся в правом
+// углу шапки, на одной строке с именем.
+function ResponseCard({ r }) {
   const fio = r.lastName + " " + r.firstName + " " + r.patronymic;
   return (
-    <Card bordered onClick={onOpen} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} style={{
-      cursor: "pointer", height: "100%",
-      boxShadow: hovered ? "inset 0 0 0 1.5px var(--sk-stroke-accent)" : "inset 0 0 0 1px var(--sk-stroke)",
-    }}>
-      <div className="sk-col sk-gap-3" style={{ height: "100%" }}>
-        <div className="sk-row sk-gap-2" style={{ alignItems: "flex-start" }}>
-          <Avatar name={fio} size={36} />
-          <div className="sk-col" style={{ gap: 0, minWidth: 0, flex: 1 }}>
-            <div className="sk-label-3" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{fio}</div>
-            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.position} · {r.department}</div>
+    <Card bordered style={{ boxShadow: "inset 0 0 0 1px var(--sk-stroke)" }}>
+      <div className="sk-col sk-gap-3">
+        <div className="sk-row sk-gap-3" style={{ alignItems: "flex-start" }}>
+          <Avatar name={fio} size={40} />
+          <div className="sk-col" style={{ gap: 2, minWidth: 0, flex: 1 }}>
+            <div className="sk-row sk-gap-2" style={{ alignItems: "baseline", flexWrap: "wrap", justifyContent: "space-between" }}>
+              <div className="sk-label-3">{fio}</div>
+              {r.date && <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", flexShrink: 0 }}>Откликнулся {r.date}</div>}
+            </div>
+            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{r.position} · {r.department}</div>
+            <div className="sk-row sk-gap-3 sk-muted" style={{ font: "var(--sk-label-4-regular)", marginTop: 2 }}>
+              <span className="sk-row sk-gap-1"><IconBriefcase size={13} />Стаж {r.tenure}</span>
+              <span className="sk-row sk-gap-1"><IconMapPin size={13} />{r.city}</span>
+            </div>
+            <div className="sk-col sk-gap-1" style={{ marginTop: 2 }}>
+              <a href={"tel:" + r.phone} className="sk-row sk-gap-1" style={{ color: "var(--sk-text-accent)", font: "var(--sk-label-4-regular)", textDecoration: "none" }}>
+                <IconPhone size={13} color="var(--sk-icon-accent)" />{r.phone}
+              </a>
+              <a href={"mailto:" + r.email} className="sk-row sk-gap-1" style={{ color: "var(--sk-text-accent)", font: "var(--sk-label-4-regular)", textDecoration: "none" }}>
+                <IconMail size={13} color="var(--sk-icon-accent)" />{r.email}
+              </a>
+            </div>
           </div>
         </div>
 
-        <div className="sk-row sk-gap-3 sk-muted" style={{ font: "var(--sk-label-4-regular)", flexWrap: "wrap" }}>
-          <span className="sk-row sk-gap-1"><IconBriefcase size={13} />Стаж {r.tenure}</span>
-          <span className="sk-row sk-gap-1"><IconMapPin size={13} />{r.city}</span>
-        </div>
+        <Divider />
 
-        <div className="sk-label-4-regular" style={{
-          flex: 1, color: "var(--sk-text-secondary)",
-          display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden",
-        }}>
-          {r.letter || "Кандидат не оставил сопроводительное письмо."}
-        </div>
-
-        <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Откликнулся {r.date}</div>
+        <LetterBlock letter={r.letter} />
+        <ResumeCard r={r} />
       </div>
     </Card>
-  );
-}
-
-function ResponseDetailModal({ r, onClose }) {
-  const fio = r.lastName + " " + r.firstName + " " + r.patronymic;
-  return (
-    <Modal open title={fio} onClose={onClose} size="m"
-      secondary={<Button mode="secondary" onClick={onClose}>Закрыть</Button>}>
-      <div className="sk-col sk-gap-4">
-        <div className="sk-row sk-gap-3" style={{ alignItems: "center" }}>
-          <Avatar name={fio} size={44} />
-          <div className="sk-col" style={{ gap: 0 }}>
-            <div className="sk-label-2">{r.position}</div>
-            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{r.department}</div>
-          </div>
-        </div>
-
-        <Card bordered>
-          <DetailRow label="Стаж в компании" value={r.tenure} />
-          <Divider />
-          <DetailRow label="Город" value={r.city} />
-          <Divider />
-          <DetailRow label="Дата отклика" value={r.date} />
-          <Divider />
-          <div className="sk-row sk-gap-2" style={{ justifyContent: "space-between", padding: "6px 0", alignItems: "center" }}>
-            <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}><IconPhone size={13} style={{ verticalAlign: -2, marginRight: 4 }} />Телефон</span>
-            <span className="sk-label-4">{r.phone}</span>
-          </div>
-          <Divider />
-          <div className="sk-row sk-gap-2" style={{ justifyContent: "space-between", padding: "6px 0", alignItems: "center" }}>
-            <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}><IconMail size={13} style={{ verticalAlign: -2, marginRight: 4 }} />Почта</span>
-            <span className="sk-label-4">{r.email}</span>
-          </div>
-        </Card>
-
-        <div className="sk-col sk-gap-2">
-          <div className="sk-label-4" style={{ color: "var(--sk-text-tertiary)", textTransform: "uppercase" }}>Сопроводительное письмо</div>
-          <div className="sk-label-3-regular" style={{ whiteSpace: "pre-wrap" }}>{r.letter || "Кандидат не оставил сопроводительное письмо."}</div>
-        </div>
-
-        <div className="sk-col sk-gap-2">
-          <div className="sk-label-4" style={{ color: "var(--sk-text-tertiary)", textTransform: "uppercase" }}>Резюме</div>
-          <ResumeCard r={r} />
-        </div>
-      </div>
-    </Modal>
   );
 }
 
@@ -188,15 +171,9 @@ function Page() {
   const vacancy = D.vacancies.find((v) => v.id === vacancyIdFromUrl());
   const responses = vacancy.responses || [];
   const [q, setQ] = React.useState("");
-  const [openIndex, setOpenIndex] = React.useState(null);
-  // Таблица — вид по умолчанию: та же логика, что и в остальных HR-разделах (Планы
-  // сотрудников, Управление вакансиями) — плотное сравнение полей по колонкам, привычнее
-  // для перебора большого числа откликов. Карточки — альтернатива, когда откликов немного
-  // и важнее сразу видеть начало сопроводительного письма.
-  const [view, setView] = React.useState("table"); // "table" | "cards"
   const [filtersOpen, setFiltersOpen] = React.useState(false);
   const [filters, setFilters] = React.useState({ city: "", department: "", tenure: "" });
-  const [sortBy, setSortBy] = React.useState(null); // null | { key, dir: "asc" | "desc" }
+  const [sort, setSort] = React.useState("date:desc");
 
   const cityOptions = React.useMemo(() => [...new Set(responses.map((r) => r.city))].sort(), [responses]);
   const departmentOptions = React.useMemo(() => [...new Set(responses.map((r) => r.department))].sort(), [responses]);
@@ -213,71 +190,21 @@ function Page() {
     if (filters.city) list = list.filter((r) => r.city === filters.city);
     if (filters.department) list = list.filter((r) => r.department === filters.department);
     if (filters.tenure) list = list.filter((r) => tenureBucket(r.tenure) === filters.tenure);
-    if (sortBy) {
-      const dir = sortBy.dir === "asc" ? 1 : -1;
+    if (sort) {
+      const [key, dir] = sort.split(":");
+      const m = dir === "asc" ? 1 : -1;
       list = [...list].sort((a, b) => {
         let av, bv;
-        if (sortBy.key === "name") { av = a.lastName + a.firstName; bv = b.lastName + b.firstName; }
-        else if (sortBy.key === "tenure") { av = parseTenureMonths(a.tenure); bv = parseTenureMonths(b.tenure); }
-        else if (sortBy.key === "city") { av = a.city; bv = b.city; }
-        else if (sortBy.key === "date") { av = parseDate(a.date); bv = parseDate(b.date); }
-        if (typeof av === "number" && typeof bv === "number") return (av - bv) * dir;
-        return String(av).localeCompare(String(bv), "ru") * dir;
+        if (key === "name") { av = a.lastName + a.firstName; bv = b.lastName + b.firstName; }
+        else if (key === "tenure") { av = parseTenureMonths(a.tenure); bv = parseTenureMonths(b.tenure); }
+        else if (key === "city") { av = a.city; bv = b.city; }
+        else if (key === "date") { av = parseDate(a.date); bv = parseDate(b.date); }
+        if (typeof av === "number" && typeof bv === "number") return (av - bv) * m;
+        return String(av).localeCompare(String(bv), "ru") * m;
       });
     }
     return list;
-  }, [responses, needle, filters, sortBy]);
-
-  function toggleSort(key) {
-    setSortBy((s) => {
-      if (!s || s.key !== key) return { key, dir: "asc" };
-      if (s.dir === "asc") return { key, dir: "desc" };
-      return null;
-    });
-  }
-  function SortableHeader({ label, sortKey }) {
-    const active = sortBy && sortBy.key === sortKey;
-    return (
-      <button type="button" onClick={() => toggleSort(sortKey)} className="sk-row sk-gap-1 sk-clickable"
-        style={{ background: "none", border: "none", padding: 0, font: "inherit", color: active ? "var(--sk-text-primary)" : "inherit", cursor: "pointer", alignItems: "center" }}>
-        {label}
-        <span style={{ display: "inline-flex", flexDirection: "column", lineHeight: 0, opacity: active ? 1 : 0.35 }}>
-          <Icons.IconChevronUp size={11} style={{ marginBottom: -2, color: active && sortBy.dir === "asc" ? "var(--sk-text-accent)" : "currentColor" }} />
-          <Icons.IconChevronDown size={11} style={{ color: active && sortBy.dir === "desc" ? "var(--sk-text-accent)" : "currentColor" }} />
-        </span>
-      </button>
-    );
-  }
-
-  const columns = [
-    { key: "name", title: <SortableHeader label="Кандидат" sortKey="name" />, render: (r) => (
-      <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
-        <Avatar name={r.lastName + " " + r.firstName} size={32} />
-        <span className="sk-label-3">{r.lastName} {r.firstName} {r.patronymic}</span>
-      </div>
-    ) },
-    { key: "role", title: "Текущая роль", render: (r) => (
-      <div className="sk-col" style={{ gap: 0 }}>
-        <span className="sk-label-3-regular">{r.position}</span>
-        <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{r.department}</span>
-      </div>
-    ) },
-    { key: "tenure", title: <SortableHeader label="Стаж" sortKey="tenure" />, render: (r) => <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{r.tenure}</span> },
-    { key: "city", title: <SortableHeader label="Город" sortKey="city" />, render: (r) => <span className="sk-label-3-regular">{r.city}</span> },
-    { key: "letter", title: "Сопроводительное письмо", width: 280, render: (r) => (
-      r.letter ? (
-        <div className="sk-label-4-regular" style={{
-          color: "var(--sk-text-secondary)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
-        }}>{r.letter}</div>
-      ) : (
-        <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>—</span>
-      )
-    ) },
-    { key: "date", title: <SortableHeader label="Дата отклика" sortKey="date" />, render: (r) => <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{r.date}</span> },
-    { key: "resume", title: "Резюме", width: 110, render: (r) => (
-      <Button mode="tertiary" size="s" icon={<IconDownload size={15} />} onClick={(e) => { e.stopPropagation(); downloadResume(r); }}>Скачать</Button>
-    ) },
-  ];
+  }, [responses, needle, filters, sort]);
 
   return (
     <AppShell role="hr" active="vacancies" base=".."
@@ -285,7 +212,8 @@ function Page() {
       <div className="sk-col sk-gap-1">
         <div className="sk-title-4">Отклики</div>
         <div className="sk-row sk-gap-2 sk-muted" style={{ alignItems: "center", flexWrap: "wrap" }}>
-          <span className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>{vacancy.title}</span>
+          <a href={"vacancy.html?id=" + vacancy.id} className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>{vacancy.title}</a>
+          <Tag size="s" hue={vacancy.status === "open" ? "positive" : "neutral"}>{vacancy.status === "open" ? "Идёт поиск" : "Закрыта"}</Tag>
           <span>·</span>
           <span className="sk-row sk-gap-1"><IconMapPin size={13} />{vacancy.city}</span>
           <span className="sk-row sk-gap-1"><IconBriefcase size={13} />{vacancy.department}</span>
@@ -299,22 +227,21 @@ function Page() {
           style={{ background: "var(--sk-surface-page)", border: "1px solid var(--sk-stroke)" }}>
           Фильтры{hasActiveFilters ? " · " + activeFilterCount : ""}
         </Button>
-        <SegmentedControl size="s" active={view} onChange={setView}
-          items={[{ id: "table", label: "Таблица" }, { id: "cards", label: "Карточки" }]} />
+        <Select value={sort} placeholder="Без сортировки" options={SORT_OPTIONS} onChange={setSort} style={{ minWidth: 220 }} />
       </div>
 
       {filtersOpen && (
         <Card bordered>
           <div className="sk-row sk-gap-3" style={{ flexWrap: "wrap", alignItems: "flex-end" }}>
-            <Select label="Город" value={filters.city} placeholder="Любой город"
+            <ClearableSelect label="Город" value={filters.city} placeholder="Любой город"
               options={cityOptions.map((c) => ({ value: c, label: c }))}
-              onChange={(v) => setFilters((f) => ({ ...f, city: v }))} style={{ minWidth: 180 }} />
-            <Select label="Подразделение" value={filters.department} placeholder="Любое подразделение"
+              onChange={(v) => setFilters((f) => ({ ...f, city: v }))} onClear={() => setFilters((f) => ({ ...f, city: "" }))} style={{ minWidth: 180 }} />
+            <ClearableSelect label="Подразделение" value={filters.department} placeholder="Любое подразделение"
               options={departmentOptions.map((d) => ({ value: d, label: d }))}
-              onChange={(v) => setFilters((f) => ({ ...f, department: v }))} style={{ minWidth: 220 }} />
-            <Select label="Стаж в компании" value={filters.tenure} placeholder="Любой стаж"
+              onChange={(v) => setFilters((f) => ({ ...f, department: v }))} onClear={() => setFilters((f) => ({ ...f, department: "" }))} style={{ minWidth: 220 }} />
+            <ClearableSelect label="Стаж в компании" value={filters.tenure} placeholder="Любой стаж"
               options={Object.entries(TENURE_BUCKET_LABELS).map(([value, label]) => ({ value, label }))}
-              onChange={(v) => setFilters((f) => ({ ...f, tenure: v }))} style={{ minWidth: 180 }} />
+              onChange={(v) => setFilters((f) => ({ ...f, tenure: v }))} onClear={() => setFilters((f) => ({ ...f, tenure: "" }))} style={{ minWidth: 180 }} />
             {hasActiveFilters && (
               <Button mode="tertiary" onClick={() => setFilters({ city: "", department: "", tenure: "" })}>Сбросить</Button>
             )}
@@ -328,21 +255,12 @@ function Page() {
         <Card><div className="sk-muted" style={{ textAlign: "center", padding: "24px 0" }}>
           {responses.length === 0 ? "Пока нет откликов на эту вакансию." : "Ничего не нашлось по заданным условиям."}
         </div></Card>
-      ) : view === "table" ? (
-        <div className="sk-scroll" style={{ overflowX: "auto" }}>
-          <Table columns={columns} rows={filtered.map((r, i) => ({ ...r, id: i }))}
-            onRowClick={(r) => setOpenIndex(r.id)} />
-        </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+        <div className="sk-col sk-gap-3">
           {filtered.map((r, i) => (
-            <ResponseCard key={i} r={r} onOpen={() => setOpenIndex(i)} />
+            <ResponseCard key={i} r={r} />
           ))}
         </div>
-      )}
-
-      {openIndex != null && filtered[openIndex] && (
-        <ResponseDetailModal r={filtered[openIndex]} onClose={() => setOpenIndex(null)} />
       )}
     </AppShell>
   );

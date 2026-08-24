@@ -46,7 +46,7 @@ const target = path.resolve(__dirname, "..", "employee", "plan.html");
     await tick(80);
 
     // 1. Подцели цели g3 видны сразу без разворачивания (шеврон убран — список всегда развёрнут)
-    const goalTitle = [...w.document.querySelectorAll("div")].find(el => el.textContent.trim() === "Выполнить финансовый план 3-го месяца и освоить полный цикл продажи");
+    const goalTitle = [...w.document.querySelectorAll("div")].find(el => el.textContent.trim() === "Освоить полный цикл продажи и закрывать сделки без наставника");
     console.log("Found goal g3 title:", !!goalTitle ? "PASS" : "FAIL");
 
     // 2. Открыть подцель "не начата" (g3s1) прямо со страницы (список виден без клика по цели) и взять в работу
@@ -82,7 +82,7 @@ const target = path.resolve(__dirname, "..", "employee", "plan.html");
     const maxTab2 = [...w.document.querySelectorAll("span")].find(el => el.textContent.includes("План адаптации"));
     maxTab2.dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
     await tick(80);
-    const goalCardTitle = [...w.document.querySelectorAll(".sk-title-5")].find(el => el.textContent.trim() === "Выполнить финансовый план 3-го месяца и освоить полный цикл продажи");
+    const goalCardTitle = [...w.document.querySelectorAll(".sk-title-5")].find(el => el.textContent.trim() === "Освоить полный цикл продажи и закрывать сделки без наставника");
     console.log("Goal card title found on page:", !!goalCardTitle ? "PASS" : "FAIL");
     goalCardTitle.closest(".sk-clickable").dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
     await tick(80);

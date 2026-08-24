@@ -46,7 +46,7 @@ const target = path.resolve(__dirname, "..", "employee", "plan.html");
     await tick(80);
 
     // Цель g2 и её подцели видны сразу, без разворачивания шевроном
-    const goalTitle = [...w.document.querySelectorAll("div")].find(el => el.textContent.trim() === "Выполнить финансовый план 2-го месяца и вывести 3 сделки на этап КП");
+    const goalTitle = [...w.document.querySelectorAll("div")].find(el => el.textContent.trim() === "Вывести 3 сделки на этап КП и выполнить план на 80%");
     console.log("Цель g2 найдена на странице:", !!goalTitle ? "PASS" : "FAIL");
 
     // Кликаем на подцель "Подготовить и отправить 3 КП"

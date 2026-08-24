@@ -43,23 +43,44 @@ function EmployeeVacanciesTabs({ active, responsesCount }) {
   );
 }
 
-// Чип прикреплённого резюме — по виду похож на чип демо-вложения (см. manager/plan.html),
-// но без кнопки удаления: здесь это просто то, что сотрудник уже отправил.
-function ResumeChip({ name, size }) {
+// Резюме в контуре не хранится как настоящий файл — при скачивании собираем текстовый
+// слепок из тех же данных, что уже показаны (тот же приём, что в hr/vacancy-responses.html).
+function downloadResumeStub(name, letter) {
+  const lines = [D.person.name, D.person.position + " — " + D.person.department, "", "Файл: " + name, "", letter ? "Сопроводительное письмо:" : "", letter || ""];
+  const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = name.replace(/\.pdf$/i, "") + ".txt";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// Карточка прикреплённого резюме — по референсу (см. мои-отклики.svg): простая белая
+// плашка с рамкой, без отдельной кнопки — кликабельна целиком.
+function ResumeCard({ name, size, letter }) {
   return (
-    <div className="sk-row sk-gap-2" style={{
-      alignItems: "center", padding: "8px 10px", border: "1px solid var(--sk-stroke)",
-      borderRadius: "var(--sk-radius-2)", background: "var(--sk-surface-page)", maxWidth: 280,
+    <div className="sk-row sk-gap-3 sk-clickable" onClick={(e) => { e.preventDefault(); e.stopPropagation(); downloadResumeStub(name, letter); }} style={{
+      alignItems: "center", padding: "12px 14px", borderRadius: "var(--sk-radius-3)",
+      border: "1px solid var(--sk-stroke)", background: "var(--sk-surface-page)", maxWidth: 320,
     }}>
       <div style={{
-        width: 26, height: 26, borderRadius: "var(--sk-radius-2)", flexShrink: 0,
-        background: "var(--sk-surface-secondary)", display: "flex", alignItems: "center", justifyContent: "center",
-      }}><IconFileText size={14} color="var(--sk-icon-secondary)" /></div>
-      <div className="sk-col" style={{ gap: 0, minWidth: 0, flex: 1 }}>
+        width: 36, height: 36, borderRadius: "var(--sk-radius-2)", flexShrink: 0,
+        display: "flex", alignItems: "center", justifyContent: "center", background: "var(--sk-accent-secondary)",
+      }}><IconFileText size={18} color="var(--sk-icon-accent)" /></div>
+      <div className="sk-col" style={{ flex: 1, gap: 0, minWidth: 0 }}>
         <div className="sk-label-4" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</div>
         {size && <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{size}</div>}
       </div>
     </div>
+  );
+}
+
+// Сопроводительное письмо — по референсу показывается целиком, без подложки и без
+// заголовка-лейбла: обычный текст абзацами (в данных уже разделены пустой строкой).
+function LetterBlock({ letter }) {
+  if (!letter) return null;
+  return (
+    <div className="sk-label-3-regular" style={{ color: "var(--sk-text-primary)", whiteSpace: "pre-wrap" }}>{letter}</div>
   );
 }
 
@@ -93,8 +114,8 @@ function ResponseRow({ r }) {
 
           <div className="sk-col sk-gap-3">
             <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Отправлено {fmtRuDate(r.date)}</div>
-            {r.letter && <div className="sk-label-3-regular" style={{ whiteSpace: "pre-line" }}>{r.letter}</div>}
-            {r.resumeFile && <ResumeChip name={r.resumeFile} size={r.resumeSize} />}
+            <LetterBlock letter={r.letter} />
+            {r.resumeFile && <ResumeCard name={r.resumeFile} size={r.resumeSize} letter={r.letter} />}
           </div>
         </div>
       </Card>
@@ -106,11 +127,11 @@ function Page() {
   const responses = D.myResponses;
   return (
     <AppShell role="employee" active="vacancies" base="..">
-      <div className="sk-title-4">Откройте новые карьерные возможности</div>
+      <div className="sk-title-3">Откройте новые карьерные возможности</div>
       <EmployeeVacanciesTabs active="my-responses" responsesCount={responses.length} />
 
       <div className="sk-col sk-gap-2">
-        <div className="sk-muted">Вакансии, на которые вы откликнулись. Дальнейшая обработка и обратная связь — на стороне рекрутера.</div>
+        <div className="sk-muted">Вакансии, на которые вы откликнулись. Информацию о движении откликов вы будете получать в уведомлениях.</div>
       </div>
       <div className="sk-col sk-gap-3">
         {responses.length === 0 && (
